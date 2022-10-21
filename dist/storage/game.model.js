@@ -9,9 +9,13 @@ const gameSchema = new mongoose_1.Schema({
     },
     players: {
         type: [{
-                id: {
-                    type: mongoose_1.Types.ObjectId,
-                    ref: 'User',
+                // _userId: { 
+                //   type: Schema.Types.ObjectId,
+                //   ref: 'User',
+                //   required: true,
+                // },
+                userId: {
+                    type: String,
                     required: true,
                 },
                 symbol: {

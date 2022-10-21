@@ -18,29 +18,20 @@ export class GameRepository implements IGameRepository {
     private readonly _gameModel: typeof GameModel,
   ) {}
   async find(gameId: TId): Promise<GameDBEntity | null> {
-    const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) }).exec();
-    return result ? result.toObject() : result
+    const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) });
+    // TODO: .toObject() or .lean()?
+    return result ? result.toObject({ getters: true }) : result
   }
 
   async update(gameId: TId, gameUpdates: TMakeMoveUpdates) {
-    console.log('REPO: gameUpdates', gameUpdates);
-    
-    const gameToUpdate = await this.find(gameId);
-    const { fieldCell } = gameUpdates;
-    const newField = {
-      ...gameToUpdate?.field,
-      [JSON.stringify(fieldCell.coordinates)]: fieldCell.symbol,
-    };
-    // @ts-ignore
-    const updatedGame: GameDBEntity = {
-      ...gameToUpdate,
-      field: newField,
-      status: gameUpdates.status,
-      currentPlayerMoveIndex: gameUpdates.currentPlayerMoveIndex,
-    };
-    games.splice(games.findIndex((game) => game.id === gameId), 1, updatedGame)
-    console.log('updatedGame', updatedGame);
-    
+    await this._gameModel.findOneAndUpdate(
+      { _id: gameId }, 
+      { 
+        status: gameUpdates.status,
+        currentPlayerMoveIndex: gameUpdates.currentPlayerMoveIndex,
+        [`field.[${gameUpdates.fieldCell.coordinates}]`]: gameUpdates.fieldCell.symbol, 
+      }
+    );
   }
 
   async addPlayer(gameId: TId, player: IPlayerDBEntity) {
@@ -49,7 +40,7 @@ export class GameRepository implements IGameRepository {
       { _id: gameId }, 
       { $push: 
         { players: 
-          { id: new ObjectId(player.id), symbol: player.symbol }
+          { userId: player.userId, symbol: player.symbol }
         }
       }
     );

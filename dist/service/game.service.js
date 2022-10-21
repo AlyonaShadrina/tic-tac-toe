@@ -31,7 +31,9 @@ class GameService {
             if (!game) {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
             }
-            const player = game.players.find(player => player.id === userId);
+            const player = game.players.find(player => player.userId === userId);
+            console.log('--game.players', game.players);
+            console.log('--player', userId, player);
             // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const moveResult = domainGame.makeMove(coordinates, player === null || player === void 0 ? void 0 : player.symbol);
@@ -49,14 +51,14 @@ class GameService {
             if (!game) {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
             }
-            if (game.players.find(player => player.id === userId)) {
+            if (game.players.find(player => player.userId === userId)) {
                 return new ActionResult_1.ActionResultError('Player already registered in game', null);
             }
             // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const addResult = domainGame.addPlayer({ symbol });
             if (ActionResult_1.ActionResult.isSuccess(addResult)) {
-                yield this._gameRepository.addPlayer(gameId, { id: userId, symbol });
+                yield this._gameRepository.addPlayer(gameId, { userId: userId, symbol });
             }
             return addResult;
         });

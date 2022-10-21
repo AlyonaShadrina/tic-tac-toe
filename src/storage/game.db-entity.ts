@@ -1,7 +1,7 @@
 import { TGameStatus } from "../domain/types";
 import { TId } from "../types";
 
-export interface IPlayerDBEntity { id: TId, symbol: string };
+export interface IPlayerDBEntity { userId: TId, symbol: string };
 
 export interface IFieldDBEntity { [key: string]: string | null };
 

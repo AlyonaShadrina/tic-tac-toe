@@ -34,7 +34,7 @@ export class GameService implements IGameService {
     if (!game) {
       return new ActionResultError('No game with provided id found', null);
     }
-    const player = game.players.find(player => player.id === userId) as IPlayerDBEntity;
+    const player = game.players.find(player => player.userId === userId) as IPlayerDBEntity;
     // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
     const moveResult = domainGame.makeMove(coordinates, player?.symbol);
@@ -53,7 +53,7 @@ export class GameService implements IGameService {
     if (!game) {
       return new ActionResultError('No game with provided id found', null);
     }
-    if (game.players.find(player => player.id === userId)) {
+    if (game.players.find(player => player.userId === userId)) {
       return new ActionResultError('Player already registered in game', null)
     }
     // TODO: inject GameMapper? 
@@ -61,7 +61,7 @@ export class GameService implements IGameService {
     const addResult = domainGame.addPlayer({ symbol });
 
     if (ActionResult.isSuccess(addResult)) {
-      await this._gameRepository.addPlayer(gameId, { id: userId, symbol });
+      await this._gameRepository.addPlayer(gameId, { userId: userId, symbol });
     }
 
     return addResult;

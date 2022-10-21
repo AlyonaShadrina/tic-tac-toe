@@ -33,6 +33,7 @@ function main() {
                 return __awaiter(this, void 0, void 0, function* () {
                     const result = yield gameController.loadGame(this.gameId);
                     this.game = result.info.data;
+                    console.log('this.game', this.game);
                     this.printUI();
                 });
             }
@@ -90,7 +91,9 @@ function main() {
             return __awaiter(this, void 0, void 0, function* () {
                 yield ui1.loadGame();
                 yield ui1.addPlayer('63528122553c55811f382ac8', 'o');
+                // await ui1.addPlayer('63528136553c55811f382ac9', 'x');
                 yield ui1.startGame();
+                yield ui1.makeMove('63528122553c55811f382ac8', [0, 0]);
                 // setTimeout(async () => {
                 //   await ui1.makeMove('0', [-1, 0]);
                 // }, 0);

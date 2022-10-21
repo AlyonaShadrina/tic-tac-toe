@@ -1,4 +1,4 @@
-import { Schema, Types, model } from "mongoose";
+import { Schema, model } from "mongoose";
 
 const gameSchema = new Schema(
   {
@@ -9,9 +9,14 @@ const gameSchema = new Schema(
     },
     players: {
       type: [{ 
-        id: { 
-          type: Types.ObjectId,
-          ref: 'User',
+        // TODO: in a perfect wat, this should be a fore
+        // _userId: { 
+        //   type: Schema.Types.ObjectId,
+        //   ref: 'User',
+        //   required: true,
+        // },
+        userId: { 
+          type: String,
           required: true,
         },
         symbol: { 

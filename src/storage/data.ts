@@ -26,7 +26,7 @@ export let games: IGameDBEntity[] = [
   {
     id: '1',
     status: 'in_progress',
-    players: [{ id: '0', symbol: 'o' }, { id: '1', symbol: 'x' }],
+    players: [{ userId: '0', symbol: 'o' }, { userId: '1', symbol: 'x' }],
     currentPlayerMoveIndex: 1,
     field: {
       '[-1,1]': null,
@@ -44,7 +44,7 @@ export let games: IGameDBEntity[] = [
   {
     id: '2',
     status: 'finished',
-    players: [{ id: '0', symbol: 'o' }, { id: '1', symbol: 'x' }],
+    players: [{ userId: '0', symbol: 'o' }, { userId: '1', symbol: 'x' }],
     currentPlayerMoveIndex: 0,
     field: {
       '[-1,1]': null,
