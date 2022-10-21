@@ -1,4 +1,4 @@
-import { ActionResult, ActionResultError } from "../domain/ActionResult";
+import { ActionResult, ActionResultError, ActionResultSuccess } from "../domain/ActionResult";
 import { Game, TMakeMoveUpdates } from "../domain/Game";
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { GameDBEntity, IPlayerDBEntity } from "../storage/game.db-entity";
@@ -10,7 +10,7 @@ type TMoveInfo = { gameId: TId; userId: TId; coordinates: TCoordinates };
 type TAddPlayerInfo = { gameId: TId; userId: TId; symbol: TFieldSymbol };
 
 export interface IGameService {
-  loadGame(gameId: TId): Promise<GameDBEntity>;
+  loadGame(gameId: TId): Promise<ActionResultSuccess<GameDBEntity> | ActionResultError<null>>;
   startGame(gameId: TId): Promise<ReturnType<Game['startGame']>>;
   makeMove(move: TMoveInfo): Promise<ReturnType<Game['makeMove']>>;
   addPlayer(move: TAddPlayerInfo): Promise<ReturnType<Game['addPlayer']>>;
@@ -22,11 +22,18 @@ export class GameService implements IGameService {
   ) {}
 
   async loadGame(gameId: TId) {
-    return this._gameRepository.find(gameId);
+    const game = await this._gameRepository.find(gameId);
+    if (!game) {
+      return new ActionResultError('No game with provided id found', game);
+    }
+    return new ActionResultSuccess('', game)
   }
 
   async makeMove({ gameId, userId, coordinates }: TMoveInfo) {
     const game = await this._gameRepository.find(gameId);
+    if (!game) {
+      return new ActionResultError('No game with provided id found', null);
+    }
     const player = game.players.find(player => player.id === userId) as IPlayerDBEntity;
     // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
@@ -43,6 +50,9 @@ export class GameService implements IGameService {
 
   async addPlayer({ gameId, userId, symbol }: TAddPlayerInfo) {
     const game = await this._gameRepository.find(gameId);
+    if (!game) {
+      return new ActionResultError('No game with provided id found', null);
+    }
     if (game.players.find(player => player.id === userId)) {
       return new ActionResultError('Player already registered in game', null)
     }
@@ -58,6 +68,9 @@ export class GameService implements IGameService {
   }
   async startGame(gameId: TId) {
     const game = await this._gameRepository.find(gameId);
+    if (!game) {
+      return new ActionResultError('No game with provided id found', null);
+    }
     // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
     const startResult = domainGame.startGame();

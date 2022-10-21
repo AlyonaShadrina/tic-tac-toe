@@ -1,10 +1,12 @@
-import { Game, TMakeMoveUpdates } from "../domain/Game";
+import { ObjectId } from "mongodb";
+import { TMakeMoveUpdates } from "../domain/Game";
 import { TId } from "../types";
 import { games } from "./data";
 import { GameDBEntity, IPlayerDBEntity } from "./game.db-entity";
+import GameModel from "./game.model";
 
 export interface IGameRepository {
-  find(gameId: TId): Promise<GameDBEntity>;
+  find(gameId: TId): Promise<GameDBEntity | null>;
   update(gameId: TId, gameUpdates: TMakeMoveUpdates): Promise<void>;
   addPlayer(gameId: TId, player: IPlayerDBEntity): Promise<void>;
   create(game: GameDBEntity): Promise<void>;
@@ -12,8 +14,12 @@ export interface IGameRepository {
 }
 
 export class GameRepository implements IGameRepository {
-  async find(gameId: TId): Promise<GameDBEntity> {
-    return Promise.resolve(games.find(game => game.id === gameId) as GameDBEntity);
+  constructor(
+    private readonly _gameModel: typeof GameModel,
+  ) {}
+  async find(gameId: TId): Promise<GameDBEntity | null> {
+    const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) }).exec();
+    return result ? result.toObject() : result
   }
 
   async update(gameId: TId, gameUpdates: TMakeMoveUpdates) {
@@ -25,14 +31,13 @@ export class GameRepository implements IGameRepository {
       ...gameToUpdate?.field,
       [JSON.stringify(fieldCell.coordinates)]: fieldCell.symbol,
     };
+    // @ts-ignore
     const updatedGame: GameDBEntity = {
       ...gameToUpdate,
       field: newField,
       status: gameUpdates.status,
       currentPlayerMoveIndex: gameUpdates.currentPlayerMoveIndex,
     };
-    // @ts-ignore
-    // games = [...games.filter(game => game.id !== gameId), updatedGame]
     games.splice(games.findIndex((game) => game.id === gameId), 1, updatedGame)
     console.log('updatedGame', updatedGame);
     

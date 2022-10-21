@@ -4,6 +4,19 @@ import { GameDBEntity } from "./storage/game.db-entity";
 import { GameRepository } from "./storage/game.repository";
 import { TId } from "./types";
 import { TCoordinates, TFieldSymbol } from "./domain/types";
+import { connect } from 'mongoose';
+import dotenv from 'dotenv';
+import GameModel from "./storage/game.model";
+
+dotenv.config();
+
+const url = `mongodb+srv://${process.env.DB_CONFIG_USERNAME}:${process.env.DB_CONFIG_PASSWORD}@gamecluster.gxdid8x.mongodb.net/?retryWrites=true&w=majority`;
+
+main().catch(err => console.log(err));
+
+async function main () {
+
+await connect(url, { dbName: 'tic-tac-toe' });
 
 class UI {
   game: GameDBEntity | null;
@@ -15,7 +28,9 @@ class UI {
   }
 
   async loadGame() {
-    this.game = await gameController.loadGame(this.gameId);
+    const result = await gameController.loadGame(this.gameId);
+    // console.log('this.game ', result.info.data );
+    this.game = result.info.data;
     this.printUI();
   }
 
@@ -63,7 +78,10 @@ class UI {
   }
 }
 
-const gameRepository = new GameRepository();
+  // @ts-ignore
+const gameRepository = new GameRepository(
+  GameModel,
+);
 
 const gameService = new GameService(
   gameRepository
@@ -73,48 +91,50 @@ const gameController = new GameController(
   gameService
 );
 
-// const ui1 = new UI('1');
+const ui1 = new UI('63514c97d00f343cdb2f99ba');
+
+(async function() {
+  await ui1.loadGame();
+  // await ui1.makeMove('1', [0, 1]);
+  // setTimeout(async () => {
+  //   await ui1.makeMove('0', [-1, 0]);
+  // }, 0);
+  
+  // setTimeout(async () => {
+  //   await ui1.makeMove('1', [0, -1]);
+  // }, 0);
+  // setTimeout(async () => {
+  //   await ui1.makeMove('0', [1, 0]);
+  // }, 0);
+})()
+
+// const ui0 = new UI('0');
 
 // (async function() {
-//   await ui1.loadGame();
-//   await ui1.makeMove('1', [0, 1]);
+//   await ui0.loadGame();
+//   await ui0.addPlayer('0', 'o');
+//   await ui0.addPlayer('1', 'x');
 //   setTimeout(async () => {
-//     await ui1.makeMove('0', [-1, 0]);
-//   }, 0);
-  
-//   setTimeout(async () => {
-//     await ui1.makeMove('1', [0, -1]);
+//     await ui0.startGame();
 //   }, 0);
 //   setTimeout(async () => {
-//     await ui1.makeMove('0', [1, 0]);
+//     await ui0.makeMove('0', [-1, 0]);
+//   }, 0);
+//   setTimeout(async () => {
+//     await ui0.makeMove('1', [0, 0]);
+//   }, 0);
+//   setTimeout(async () => {
+//     await ui0.makeMove('0', [-1, 1]);
+//   }, 0);
+//   setTimeout(async () => {
+//     await ui0.makeMove('1', [1, 1]);
+//   }, 0);
+//   setTimeout(async () => {
+//     await ui0.makeMove('0', [0, 1]);
+//   }, 0);
+//   setTimeout(async () => {
+//     await ui0.makeMove('1', [-1, -1]);
 //   }, 0);
 // })()
 
-const ui0 = new UI('0');
-
-(async function() {
-  await ui0.loadGame();
-  await ui0.addPlayer('0', 'o');
-  await ui0.addPlayer('1', 'x');
-  setTimeout(async () => {
-    await ui0.startGame();
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('0', [-1, 0]);
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('1', [0, 0]);
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('0', [-1, 1]);
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('1', [1, 1]);
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('0', [0, 1]);
-  }, 0);
-  setTimeout(async () => {
-    await ui0.makeMove('1', [-1, -1]);
-  }, 0);
-})()
+}

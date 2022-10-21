@@ -10,11 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameRepository = void 0;
+const mongodb_1 = require("mongodb");
 const data_1 = require("./data");
 class GameRepository {
+    constructor(_gameModel) {
+        this._gameModel = _gameModel;
+    }
     find(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return Promise.resolve(data_1.games.find(game => game.id === gameId));
+            const result = yield this._gameModel.findOne({ _id: new mongodb_1.ObjectId(gameId) }).exec();
+            return result ? result.toObject() : result;
         });
     }
     update(gameId, gameUpdates) {
@@ -23,9 +28,8 @@ class GameRepository {
             const gameToUpdate = yield this.find(gameId);
             const { fieldCell } = gameUpdates;
             const newField = Object.assign(Object.assign({}, gameToUpdate === null || gameToUpdate === void 0 ? void 0 : gameToUpdate.field), { [JSON.stringify(fieldCell.coordinates)]: fieldCell.symbol });
-            const updatedGame = Object.assign(Object.assign({}, gameToUpdate), { field: newField, status: gameUpdates.status, currentPlayerMoveIndex: gameUpdates.currentPlayerMoveIndex });
             // @ts-ignore
-            // games = [...games.filter(game => game.id !== gameId), updatedGame]
+            const updatedGame = Object.assign(Object.assign({}, gameToUpdate), { field: newField, status: gameUpdates.status, currentPlayerMoveIndex: gameUpdates.currentPlayerMoveIndex });
             data_1.games.splice(data_1.games.findIndex((game) => game.id === gameId), 1, updatedGame);
             console.log('updatedGame', updatedGame);
         });

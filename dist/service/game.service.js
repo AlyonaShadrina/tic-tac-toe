@@ -18,12 +18,19 @@ class GameService {
     }
     loadGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this._gameRepository.find(gameId);
+            const game = yield this._gameRepository.find(gameId);
+            if (!game) {
+                return new ActionResult_1.ActionResultError('No game with provided id found', game);
+            }
+            return new ActionResult_1.ActionResultSuccess('', game);
         });
     }
     makeMove({ gameId, userId, coordinates }) {
         return __awaiter(this, void 0, void 0, function* () {
             const game = yield this._gameRepository.find(gameId);
+            if (!game) {
+                return new ActionResult_1.ActionResultError('No game with provided id found', null);
+            }
             const player = game.players.find(player => player.id === userId);
             // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
@@ -39,6 +46,9 @@ class GameService {
     addPlayer({ gameId, userId, symbol }) {
         return __awaiter(this, void 0, void 0, function* () {
             const game = yield this._gameRepository.find(gameId);
+            if (!game) {
+                return new ActionResult_1.ActionResultError('No game with provided id found', null);
+            }
             if (game.players.find(player => player.id === userId)) {
                 return new ActionResult_1.ActionResultError('Player already registered in game', null);
             }
@@ -54,6 +64,9 @@ class GameService {
     startGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
             const game = yield this._gameRepository.find(gameId);
+            if (!game) {
+                return new ActionResult_1.ActionResultError('No game with provided id found', null);
+            }
             // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const startResult = domainGame.startGame();

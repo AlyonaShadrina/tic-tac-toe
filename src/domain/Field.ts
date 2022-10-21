@@ -11,7 +11,7 @@ export class Field implements IField {
     public cells: IField['cells']
   ) {}
 
-  static createEmptyField() {
+  static createEmptyField(): IField {
     const coordinates = [    
       [-1, 1],
       [0, 1],
