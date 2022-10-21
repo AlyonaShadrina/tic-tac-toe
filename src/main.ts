@@ -95,6 +95,7 @@ const ui1 = new UI('63514c97d00f343cdb2f99ba');
 (async function() {
   await ui1.loadGame();
   await ui1.addPlayer('63528122553c55811f382ac8', 'o');
+  await ui1.startGame();
   // setTimeout(async () => {
   //   await ui1.makeMove('0', [-1, 0]);
   // }, 0);

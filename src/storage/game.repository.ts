@@ -60,8 +60,11 @@ export class GameRepository implements IGameRepository {
   }
   
   async startGame(gameId: TId) {
-    const gameToUpdate = await this.find(gameId);
-    (gameToUpdate as GameDBEntity).status = 'in_progress';
+    // TODO: check what happens if fails
+    await this._gameModel.findOneAndUpdate(
+      { _id: gameId }, 
+      { status: 'in_progress' },
+    );
   }
 
   delete() {

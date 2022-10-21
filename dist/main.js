@@ -90,6 +90,7 @@ function main() {
             return __awaiter(this, void 0, void 0, function* () {
                 yield ui1.loadGame();
                 yield ui1.addPlayer('63528122553c55811f382ac8', 'o');
+                yield ui1.startGame();
                 // setTimeout(async () => {
                 //   await ui1.makeMove('0', [-1, 0]);
                 // }, 0);

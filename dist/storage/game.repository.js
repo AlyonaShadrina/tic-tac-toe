@@ -49,8 +49,10 @@ class GameRepository {
     }
     startGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const gameToUpdate = yield this.find(gameId);
-            gameToUpdate.status = 'in_progress';
+            // const gameToUpdate = await this.find(gameId);
+            // (gameToUpdate as GameDBEntity).status = 'in_progress';
+            // TODO: check what happens if fails
+            yield this._gameModel.findOneAndUpdate({ _id: gameId }, { status: 'in_progress' });
         });
     }
     delete() {
