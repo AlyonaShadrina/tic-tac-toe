@@ -44,12 +44,15 @@ export class GameRepository implements IGameRepository {
   }
 
   async addPlayer(gameId: TId, player: IPlayerDBEntity) {
-    const gameToUpdate = await this.find(gameId);
-    console.log('REPO add player: ', player);
-    
-    await gameToUpdate?.players.push(player);
-    console.log('----gameToUpdate?.players', gameToUpdate?.players);
-    
+    // TODO: check what happens if fails
+    await this._gameModel.findOneAndUpdate(
+      { _id: gameId }, 
+      { $push: 
+        { players: 
+          { id: new ObjectId(player.id), symbol: player.symbol }
+        }
+      }
+    );
   }
 
   async create(game: GameDBEntity) {

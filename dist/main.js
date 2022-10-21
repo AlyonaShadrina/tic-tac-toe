@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const mongoose_1 = require("mongoose");
+const dotenv_1 = __importDefault(require("dotenv"));
 const game_controller_1 = require("./controller/game.controller");
 const game_service_1 = require("./service/game.service");
 const game_repository_1 = require("./storage/game.repository");
-const mongoose_1 = require("mongoose");
-const dotenv_1 = __importDefault(require("dotenv"));
 const game_model_1 = __importDefault(require("./storage/game.model"));
 dotenv_1.default.config();
 const url = `mongodb+srv://${process.env.DB_CONFIG_USERNAME}:${process.env.DB_CONFIG_PASSWORD}@gamecluster.gxdid8x.mongodb.net/?retryWrites=true&w=majority`;
@@ -32,7 +32,6 @@ function main() {
             loadGame() {
                 return __awaiter(this, void 0, void 0, function* () {
                     const result = yield gameController.loadGame(this.gameId);
-                    // console.log('this.game ', result.info.data );
                     this.game = result.info.data;
                     this.printUI();
                 });
@@ -90,7 +89,7 @@ function main() {
         (function () {
             return __awaiter(this, void 0, void 0, function* () {
                 yield ui1.loadGame();
-                // await ui1.makeMove('1', [0, 1]);
+                yield ui1.addPlayer('63528122553c55811f382ac8', 'o');
                 // setTimeout(async () => {
                 //   await ui1.makeMove('0', [-1, 0]);
                 // }, 0);

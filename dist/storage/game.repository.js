@@ -36,10 +36,10 @@ class GameRepository {
     }
     addPlayer(gameId, player) {
         return __awaiter(this, void 0, void 0, function* () {
-            const gameToUpdate = yield this.find(gameId);
-            console.log('REPO add player: ', player);
-            yield (gameToUpdate === null || gameToUpdate === void 0 ? void 0 : gameToUpdate.players.push(player));
-            console.log('----gameToUpdate?.players', gameToUpdate === null || gameToUpdate === void 0 ? void 0 : gameToUpdate.players);
+            // TODO: check what happens if fails
+            yield this._gameModel.findOneAndUpdate({ _id: gameId }, { $push: { players: { id: new mongodb_1.ObjectId(player.id), symbol: player.symbol }
+                }
+            });
         });
     }
     create(game) {

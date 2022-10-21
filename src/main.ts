@@ -1,11 +1,11 @@
+import { connect } from 'mongoose';
+import dotenv from 'dotenv';
 import { GameController } from "./controller/game.controller";
 import { GameService } from "./service/game.service";
 import { GameDBEntity } from "./storage/game.db-entity";
 import { GameRepository } from "./storage/game.repository";
 import { TId } from "./types";
 import { TCoordinates, TFieldSymbol } from "./domain/types";
-import { connect } from 'mongoose';
-import dotenv from 'dotenv';
 import GameModel from "./storage/game.model";
 
 dotenv.config();
@@ -29,7 +29,6 @@ class UI {
 
   async loadGame() {
     const result = await gameController.loadGame(this.gameId);
-    // console.log('this.game ', result.info.data );
     this.game = result.info.data;
     this.printUI();
   }
@@ -95,7 +94,7 @@ const ui1 = new UI('63514c97d00f343cdb2f99ba');
 
 (async function() {
   await ui1.loadGame();
-  // await ui1.makeMove('1', [0, 1]);
+  await ui1.addPlayer('63528122553c55811f382ac8', 'o');
   // setTimeout(async () => {
   //   await ui1.makeMove('0', [-1, 0]);
   // }, 0);
