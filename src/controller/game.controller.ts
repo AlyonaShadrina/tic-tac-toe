@@ -1,5 +1,6 @@
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { IGameService } from "../service/game.service";
+import { IPlayerDBEntity } from "../storage/game.db-entity";
 import { TId } from "../types";
 
 export class GameController {
@@ -21,5 +22,9 @@ export class GameController {
 
   async startGame(gameId: TId) {
     return this._gameService.startGame(gameId);
+  }
+
+  async createGame(players: IPlayerDBEntity[]) {
+    return this._gameService.createGame(players);
   }
 }

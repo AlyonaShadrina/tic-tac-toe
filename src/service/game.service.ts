@@ -14,6 +14,7 @@ export interface IGameService {
   startGame(gameId: TId): Promise<ReturnType<Game['startGame']>>;
   makeMove(move: TMoveInfo): Promise<ReturnType<Game['makeMove']>>;
   addPlayer(move: TAddPlayerInfo): Promise<ReturnType<Game['addPlayer']>>;
+  createGame(players: IPlayerDBEntity[]): Promise<ActionResultSuccess<GameDBEntity>>;
 }
 
 export class GameService implements IGameService {
@@ -81,4 +82,9 @@ export class GameService implements IGameService {
 
     return startResult;
   }
+
+  async createGame(players: IPlayerDBEntity[]) {
+    const game = await this._gameRepository.create(GameDBEntity.createDefaultGame({ players }));
+    return new ActionResultSuccess('', game)
+  }  
 }

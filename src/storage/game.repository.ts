@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb";
 import { TMakeMoveUpdates } from "../domain/Game";
 import { TId } from "../types";
-import { games } from "./data";
 import { GameDBEntity, IPlayerDBEntity } from "./game.db-entity";
 import GameModel from "./game.model";
 
@@ -9,7 +8,7 @@ export interface IGameRepository {
   find(gameId: TId): Promise<GameDBEntity | null>;
   update(gameId: TId, gameUpdates: TMakeMoveUpdates): Promise<void>;
   addPlayer(gameId: TId, player: IPlayerDBEntity): Promise<void>;
-  create(game: GameDBEntity): Promise<void>;
+  create(game: GameDBEntity): Promise<GameDBEntity>;
   startGame(gameId: TId): Promise<void>;
 }
 
@@ -46,8 +45,9 @@ export class GameRepository implements IGameRepository {
     );
   }
 
-  async create(game: GameDBEntity) {
-    await games.push({ ...game, id: (games.length + 1).toString() })
+  async create(game: GameDBEntity): Promise<GameDBEntity> {
+    const newGame = await new this._gameModel(game).save();
+    return newGame.toObject({ getters: true })
   }
   
   async startGame(gameId: TId) {
@@ -56,9 +56,5 @@ export class GameRepository implements IGameRepository {
       { _id: gameId }, 
       { status: 'in_progress' },
     );
-  }
-
-  delete() {
-
   }
 }

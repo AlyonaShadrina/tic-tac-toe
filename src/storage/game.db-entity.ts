@@ -1,3 +1,4 @@
+import { Field } from "../domain/Field";
 import { TGameStatus } from "../domain/types";
 import { TId } from "../types";
 
@@ -21,4 +22,18 @@ export class GameDBEntity implements IGameDBEntity{
     public status: TGameStatus,
     public id?: TId,
   ) {}
+
+  static createDefaultGame({
+    currentPlayerMoveIndex = 0,
+    players = [],
+    field = Field.createEmptyField().cells,
+    status = 'created',
+  }: Partial<IGameDBEntity>): IGameDBEntity {
+    return new GameDBEntity(
+      currentPlayerMoveIndex,
+      players,
+      field,
+      status,
+    )
+  }
 }

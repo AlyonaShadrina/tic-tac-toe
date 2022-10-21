@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameService = void 0;
 const ActionResult_1 = require("../domain/ActionResult");
+const game_db_entity_1 = require("../storage/game.db-entity");
 const game_mapper_1 = require("../storage/game.mapper");
 class GameService {
     constructor(_gameRepository) {
@@ -32,8 +33,6 @@ class GameService {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
             }
             const player = game.players.find(player => player.userId === userId);
-            console.log('--game.players', game.players);
-            console.log('--player', userId, player);
             // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const moveResult = domainGame.makeMove(coordinates, player === null || player === void 0 ? void 0 : player.symbol);
@@ -76,6 +75,12 @@ class GameService {
                 yield this._gameRepository.startGame(gameId);
             }
             return startResult;
+        });
+    }
+    createGame(players) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const game = yield this._gameRepository.create(game_db_entity_1.GameDBEntity.createDefaultGame({ players }));
+            return new ActionResult_1.ActionResultSuccess('', game);
         });
     }
 }

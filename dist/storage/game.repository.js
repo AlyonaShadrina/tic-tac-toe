@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameRepository = void 0;
 const mongodb_1 = require("mongodb");
-const data_1 = require("./data");
 class GameRepository {
     constructor(_gameModel) {
         this._gameModel = _gameModel;
@@ -19,6 +18,7 @@ class GameRepository {
     find(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
             const result = yield this._gameModel.findOne({ _id: new mongodb_1.ObjectId(gameId) });
+            // TODO: .toObject() or .lean()?
             return result ? result.toObject({ getters: true }) : result;
         });
     }
@@ -41,7 +41,8 @@ class GameRepository {
     }
     create(game) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield data_1.games.push(Object.assign(Object.assign({}, game), { id: (data_1.games.length + 1).toString() }));
+            const newGame = yield new this._gameModel(game).save();
+            return newGame.toObject({ getters: true });
         });
     }
     startGame(gameId) {
@@ -49,8 +50,6 @@ class GameRepository {
             // TODO: check what happens if fails
             yield this._gameModel.findOneAndUpdate({ _id: gameId }, { status: 'in_progress' });
         });
-    }
-    delete() {
     }
 }
 exports.GameRepository = GameRepository;

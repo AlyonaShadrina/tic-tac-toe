@@ -34,5 +34,10 @@ class GameController {
             return this._gameService.startGame(gameId);
         });
     }
+    createGame(players) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this._gameService.createGame(players);
+        });
+    }
 }
 exports.GameController = GameController;
