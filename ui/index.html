@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    class UI {
+      constructor(gameId) {
+        this.game = null;
+        this.gameId = gameId;
+      }
+
+      async loadGame() {
+        if (this.gameId) {
+          const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}`);
+          this.game = await result.json();
+          this.printUI();
+        }
+      }
+
+      async makeMove(userId, coordinates) {
+        if (this.gameId) {
+          const result = await gameController.makeMove(this.gameId, userId, coordinates);
+          console.log('makeMove result', result);
+          this.loadGame();
+        }
+      }
+
+      async addPlayer(userId, symbol) {
+        if (this.gameId) {
+          const result = await gameController.addPlayer(this.gameId, userId, symbol);
+          this.loadGame();
+        }
+      }
+
+      async startGame() {
+        if (this.gameId) {
+          const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/start`, {
+            method: 'POST',
+          });
+          if (result.ok) {
+            this.loadGame();
+          }
+        }
+      }
+
+      async createGame(players) {
+        const result = await fetch(`http://127.0.0.1:3000/api/games`, {
+          method: 'POST',
+          body: JSON.stringify(players),
+        });
+        if (result.ok) {
+          this.gameId = (await result.json()).id;
+          this.loadGame();
+        }
+      }
+
+      printUI() {
+        this.printField();
+        this.printStatus();
+      }
+
+      printStatus() {
+        console.log('game status: ', this.game?.status);
+      }
+
+      printField() {
+        if (!this.game) {
+          console.log('No game');
+        }
+        // const cells = (this.game as GameDBEntity).field;
+        const cells = Object.keys(this.game.field).reduce((acc, curr) => {
+          acc[curr] = (this.game).field[curr] || '.'
+          return acc
+        }, {})
+        console.log(`
+        ${cells['[-1,1]']}|${cells['[0,1]']}|${cells['[1,1]']}
+        ${cells['[-1,0]']}|${cells['[0,0]']}|${cells['[1,0]']}
+        ${cells['[-1,-1]']}|${cells['[0,-1]']}|${cells['[1,-1]']}
+        `);
+      }
+    }
+  
+    // const gameId = window.location.pathname;
+    const gameId = null;
+    // const gameId = '6355178a7b904dd7ddf139bb';
+    const gameUI = new UI(gameId);
+
+    if (gameId) {
+      gameUI.loadGame();
+    } else {
+      gameUI.createGame([{ userId: '63528122553c55811f382ac8', symbol: 'o'}]);
+    }
+
+    // await ui1.addPlayer('63528122553c55811f382ac8', 'o');
+    // await ui1.addPlayer('63528136553c55811f382ac9', 'x');
+  </script>
+</body>
+</html>

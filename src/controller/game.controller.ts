@@ -1,3 +1,5 @@
+import * as http from 'node:http';
+import { ActionResult } from '../domain/ActionResult';
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { IGameService } from "../service/game.service";
 import { IPlayerDBEntity } from "../storage/game.db-entity";
@@ -5,8 +7,64 @@ import { TId } from "../types";
 
 export class GameController {
   constructor(
-    private readonly _gameService: IGameService
-  ) {}
+    private readonly _gameService: IGameService,
+    private readonly _server: http.Server,
+  ) {   
+    const _that = this;
+    this._server.on('request', async (req, res) => {
+      const headers = {
+        "Content-Type": "application/json",
+        'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'
+      };     
+
+      const isGamesUrl = req.url?.includes('/api/games'); 
+      const gameId = req.url?.split('/')[3];
+      const action = req.url?.split('/')[4];
+
+      if (req.method === "GET" && isGamesUrl) {
+        if (!gameId) {
+          res.writeHead(404, headers);
+          return res.end('no game id provided');
+        }
+        const loadGameResult = await _that.loadGame(gameId);
+        res.writeHead(200, headers);
+        return res.end(JSON.stringify(loadGameResult.info.data));
+      }
+      
+      else if (req.method === "POST" && gameId && action === 'start') {
+        const startGameResult = await _that.startGame(gameId);
+        if (!ActionResult.isSuccess(startGameResult)) {
+          res.writeHead(400, headers);
+          return res.end(JSON.stringify(startGameResult.info.data));
+        }
+        res.writeHead(200, headers);
+        return res.end(JSON.stringify(startGameResult.info.data));
+      }
+
+      else if (req.method === "POST" && isGamesUrl) {
+        // TODO: do not store it in variable, use stream pipes somehow
+        const requestBody: any = [];
+        req.on('data', (chunks) => { requestBody.push(chunks); });      
+        req.on('end', async function() {
+          const reqBody = Buffer.concat(requestBody).toString();          
+          const createGameResult = await _that.createGame(JSON.parse(reqBody) as any|| []);
+          
+          if (!ActionResult.isSuccess(createGameResult)) {
+            res.writeHead(400, headers);
+            return res.end(JSON.stringify(createGameResult.info.data));
+          }
+          res.writeHead(200, headers);
+          return res.end(JSON.stringify(createGameResult.info.data));
+        });
+      }
+      
+      else {
+        res.writeHead(404, headers);
+        return res.end('no such enpoint');
+      }
+
+    })    
+  }
 
   async loadGame(gameId: TId) {
     return this._gameService.loadGame(gameId);

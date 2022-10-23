@@ -10,9 +10,61 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameController = void 0;
+const ActionResult_1 = require("../domain/ActionResult");
 class GameController {
-    constructor(_gameService) {
+    constructor(_gameService, _server) {
         this._gameService = _gameService;
+        this._server = _server;
+        const _that = this;
+        this._server.on('request', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            const headers = {
+                "Content-Type": "application/json",
+                'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'
+            };
+            const isGamesUrl = (_a = req.url) === null || _a === void 0 ? void 0 : _a.includes('/api/games');
+            const gameId = (_b = req.url) === null || _b === void 0 ? void 0 : _b.split('/')[3];
+            const action = (_c = req.url) === null || _c === void 0 ? void 0 : _c.split('/')[4];
+            if (req.method === "GET" && isGamesUrl) {
+                if (!gameId) {
+                    res.writeHead(404, headers);
+                    return res.end('no game id provided');
+                }
+                const loadGameResult = yield _that.loadGame(gameId);
+                res.writeHead(200, headers);
+                return res.end(JSON.stringify(loadGameResult.info.data));
+            }
+            else if (req.method === "POST" && gameId && action === 'start') {
+                const startGameResult = yield _that.startGame(gameId);
+                if (!ActionResult_1.ActionResult.isSuccess(startGameResult)) {
+                    res.writeHead(400, headers);
+                    return res.end(JSON.stringify(startGameResult.info.data));
+                }
+                res.writeHead(200, headers);
+                return res.end(JSON.stringify(startGameResult.info.data));
+            }
+            else if (req.method === "POST" && isGamesUrl) {
+                // TODO: do not store it in variable, use stream pipes somehow
+                const requestBody = [];
+                req.on('data', (chunks) => { requestBody.push(chunks); });
+                req.on('end', function () {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const reqBody = Buffer.concat(requestBody).toString();
+                        const createGameResult = yield _that.createGame(JSON.parse(reqBody) || []);
+                        if (!ActionResult_1.ActionResult.isSuccess(createGameResult)) {
+                            res.writeHead(400, headers);
+                            return res.end(JSON.stringify(createGameResult.info.data));
+                        }
+                        res.writeHead(200, headers);
+                        return res.end(JSON.stringify(createGameResult.info.data));
+                    });
+                });
+            }
+            else {
+                res.writeHead(404, headers);
+                return res.end('no such enpoint');
+            }
+        }));
     }
     loadGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {

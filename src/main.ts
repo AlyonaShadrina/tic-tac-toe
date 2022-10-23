@@ -1,13 +1,10 @@
+import * as http from 'node:http';
 import { connect } from 'mongoose';
 import dotenv from 'dotenv';
 import { GameController } from "./controller/game.controller";
 import { GameService } from "./service/game.service";
-import { GameDBEntity, IPlayerDBEntity } from "./storage/game.db-entity";
 import { GameRepository } from "./storage/game.repository";
-import { TId } from "./types";
-import { TCoordinates, TFieldSymbol } from "./domain/types";
 import GameModel from "./storage/game.model";
-import { ActionResult } from './domain/ActionResult';
 
 dotenv.config();
 
@@ -16,107 +13,22 @@ const url = `mongodb+srv://${process.env.DB_CONFIG_USERNAME}:${process.env.DB_CO
 main().catch(err => console.log(err));
 
 async function main () {
+  await connect(url, { dbName: 'tic-tac-toe' });
+  console.log(`DB connected`);
 
-await connect(url, { dbName: 'tic-tac-toe' });
+  const server = await http.createServer().listen(process.env.PORT)
+  console.log(`Server running at http://127.0.0.1:${process.env.PORT}/`);
 
-class UI {
-  game: GameDBEntity | null;
-  gameId?: TId;
+  const gameRepository = new GameRepository(
+    GameModel,
+  );
 
-  constructor(gameId?: TId) {
-    this.game = null;
-    this.gameId = gameId;
-  }
+  const gameService = new GameService(
+    gameRepository
+  );
 
-  async loadGame() {
-    if (this.gameId) {
-      const result = await gameController.loadGame(this.gameId);
-      this.game = result.info.data;
-      this.printUI();
-    }
-  }
-
-  async makeMove(userId: TId, coordinates: TCoordinates) {
-    if (this.gameId) {
-      const result = await gameController.makeMove(this.gameId, userId, coordinates);
-      console.log('makeMove result', result);
-      this.loadGame();
-    }
-  }
-
-  async addPlayer(userId: TId, symbol: TFieldSymbol) {
-    if (this.gameId) {
-      const result = await gameController.addPlayer(this.gameId, userId, symbol);
-      console.log('addPlayer result', result);
-      this.loadGame();
-    }
-  }
-
-  async startGame() {
-    if (this.gameId) {
-      const result = await gameController.startGame(this.gameId);
-      console.log('startGame result', result);
-      this.loadGame();
-    }
-  }
-
-  async createGame(players: IPlayerDBEntity[]) {
-    const result = await gameController.createGame(players);
-    console.log('createGame result', result)
-    if (ActionResult.isSuccess(result)) {
-      this.gameId = result.info.data.id as string;
-      this.loadGame();
-    }
-  }
-
-  printUI() {
-    this.printField();
-    this.printStatus();
-  }
-
-  printStatus() {
-    console.log('game status: ', this.game?.status);
-  }
-
-  printField() {
-    if (!this.game) {
-      console.log('No game');
-    }
-    // const cells = (this.game as GameDBEntity).field;
-    const cells = Object.keys((this.game as GameDBEntity).field).reduce((acc, curr) => {
-      acc[curr] = (this.game as GameDBEntity).field[curr] || '.'
-      return acc
-    }, {} as any)
-    console.log(`
-    ${cells['[-1,1]']}|${cells['[0,1]']}|${cells['[1,1]']}
-    ${cells['[-1,0]']}|${cells['[0,0]']}|${cells['[1,0]']}
-    ${cells['[-1,-1]']}|${cells['[0,-1]']}|${cells['[1,-1]']}
-    `);
-  }
-}
-
-const gameRepository = new GameRepository(
-  GameModel,
-);
-
-const gameService = new GameService(
-  gameRepository
-);
-
-const gameController = new GameController(
-  gameService
-);
-
-const ui1 = new UI('63514c97d00f343cdb2f99ba');
-
-(async function() {
-  await ui1.createGame([{ userId: '63528122553c55811f382ac8', symbol: 'o'}]);
-  // await ui1.loadGame();
-  // await ui1.addPlayer('63528122553c55811f382ac8', 'o');
-  // await ui1.addPlayer('63528136553c55811f382ac9', 'x');
-  // await ui1.startGame();
-  // await ui1.makeMove('63528122553c55811f382ac8', [0, 0]);
-})()
-
-
+  new GameController(
+    gameService,
+    server,
+  );
 }
