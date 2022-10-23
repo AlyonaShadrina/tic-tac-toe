@@ -24,16 +24,25 @@
 
       async makeMove(userId, coordinates) {
         if (this.gameId) {
-          const result = await gameController.makeMove(this.gameId, userId, coordinates);
-          console.log('makeMove result', result);
-          this.loadGame();
+          const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/move`, {
+            method: 'POST',
+            body: JSON.stringify({ userId, coordinates }),
+          });
+          if (result.ok) {
+            this.loadGame();
+          }
         }
       }
 
       async addPlayer(userId, symbol) {
         if (this.gameId) {
-          const result = await gameController.addPlayer(this.gameId, userId, symbol);
-          this.loadGame();
+          const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/players`, {
+            method: 'POST',
+            body: JSON.stringify({ userId, symbol }),
+          });
+          if (result.ok) {
+            this.loadGame();
+          }
         }
       }
 

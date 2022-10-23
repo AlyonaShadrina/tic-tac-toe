@@ -50,6 +50,10 @@ export class GameService implements IGameService {
   }
 
   async addPlayer({ gameId, userId, symbol }: TAddPlayerInfo) {
+    // TODO: check if all data present
+    if (!userId || !gameId || !symbol) {
+      return new ActionResultError('Not all info provided', null);
+    }
     const game = await this._gameRepository.find(gameId);
     if (!game) {
       return new ActionResultError('No game with provided id found', null);

@@ -19,7 +19,7 @@ export class GameController {
 
       const isGamesUrl = req.url?.includes('/api/games'); 
       const gameId = req.url?.split('/')[3];
-      const action = req.url?.split('/')[4];
+      const path = req.url?.split('/')[4];
 
       if (req.method === "GET" && isGamesUrl) {
         if (!gameId) {
@@ -31,14 +31,58 @@ export class GameController {
         return res.end(JSON.stringify(loadGameResult.info.data));
       }
       
-      else if (req.method === "POST" && gameId && action === 'start') {
+      else if (req.method === "POST" && gameId && path === 'start') {
         const startGameResult = await _that.startGame(gameId);
         if (!ActionResult.isSuccess(startGameResult)) {
           res.writeHead(400, headers);
-          return res.end(JSON.stringify(startGameResult.info.data));
+          return res.end(JSON.stringify(startGameResult.info));
         }
         res.writeHead(200, headers);
         return res.end(JSON.stringify(startGameResult.info.data));
+      }
+
+      else if (req.method === "POST" && gameId && path === 'players') {
+        // TODO: do not store it in variable, use stream pipes somehow
+        const requestBody: any[] = [];
+        req.on('data', (chunks) => { requestBody.push(chunks); });      
+        req.on('end', async function() {
+          const reqBody = Buffer.concat(requestBody).toString();
+          const playerToAdd = JSON.parse(reqBody);
+          if (playerToAdd) {
+            const addPlayerResult = await _that.addPlayer(gameId, playerToAdd.userId, playerToAdd.symbol);
+            if (!ActionResult.isSuccess(addPlayerResult)) {
+              res.writeHead(400, headers);
+              return res.end(JSON.stringify(addPlayerResult.info));
+            }
+            res.writeHead(200, headers);
+            return res.end(JSON.stringify(addPlayerResult.info.data));
+          }
+          res.writeHead(400, headers);
+          return res.end(JSON.stringify('No player provided'));
+        });
+      }
+
+      else if (req.method === "POST" && gameId && path === 'move') {
+        // TODO: do not store it in variable, use stream pipes somehow
+        const requestBody: any[] = [];
+        req.on('data', (chunks) => { requestBody.push(chunks); });      
+        req.on('end', async function() {
+          const reqBody = Buffer.concat(requestBody).toString();
+          const moveInfo = JSON.parse(reqBody);
+          if (moveInfo) {
+            const makeMoveResult = await _that.makeMove(gameId, moveInfo.userId, moveInfo.coordinates);
+            // TODO: why?
+            // @ts-ignore
+            if (!ActionResult.isSuccess(makeMoveResult)) {
+              res.writeHead(400, headers);
+              return res.end(JSON.stringify(makeMoveResult.info));
+            }
+            res.writeHead(200, headers);
+            return res.end(JSON.stringify(makeMoveResult.info.data));
+          }
+          res.writeHead(400, headers);
+          return res.end(JSON.stringify('No move info provided'));
+        });
       }
 
       else if (req.method === "POST" && isGamesUrl) {

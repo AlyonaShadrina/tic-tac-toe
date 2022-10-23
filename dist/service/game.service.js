@@ -46,6 +46,10 @@ class GameService {
     }
     addPlayer({ gameId, userId, symbol }) {
         return __awaiter(this, void 0, void 0, function* () {
+            // TODO: check if all data present
+            if (!userId || !gameId || !symbol) {
+                return new ActionResult_1.ActionResultError('Not all info provided', null);
+            }
             const game = yield this._gameRepository.find(gameId);
             if (!game) {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
