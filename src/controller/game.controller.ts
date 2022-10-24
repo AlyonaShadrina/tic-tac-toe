@@ -1,112 +1,79 @@
-import * as http from 'node:http';
+import express, { Express } from 'express';
 import { ActionResult } from '../domain/ActionResult';
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { IGameService } from "../service/game.service";
 import { IPlayerDBEntity } from "../storage/game.db-entity";
 import { TId } from "../types";
 
+// TODO: userId should be taken from auth info, not from params
 export class GameController {
   constructor(
     private readonly _gameService: IGameService,
-    private readonly _server: http.Server,
-  ) {   
-    this._server.on('request', async (req, res) => {
-      // TODO: looks bad, should be rewritten
-      const headers = {
-        "Content-Type": "application/json",
-        'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'
-      };     
+    private readonly _server: Express,
+  ) {
+    this._server.use(express.json());
+    this._server.use(function(req, res, next) {
+      res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      res.setHeader('Content-Type', 'application/json');
+      next();
+    });
 
-      const isGamesUrl = req.url?.includes('/api/games'); 
-      const gameId = req.url?.split('/')[3];
-      const path = req.url?.split('/')[4];
+    this._server.post('/api/games', async (req, res) => {     
+      const loadGameResult = await this.createGame(req.body);
+      if (!ActionResult.isSuccess(loadGameResult)) {
+        res.status(400);
+        res.json(loadGameResult.info);
+      } else {
+        res.status(200);
+        res.json(loadGameResult.info.data)
+      }
+    })
+    
+    this._server.get('/api/games/:gameId', async (req, res) => {
+      const loadGameResult = await this.loadGame(req.params.gameId);
+      if (!ActionResult.isSuccess(loadGameResult)) {
+        res.status(404);
+        res.json(loadGameResult.info);
+      } else {
+        res.status(200);
+        res.json(loadGameResult.info.data)
+      }
+    })
+    
+    this._server.post('/api/games/:gameId/start', async (req, res) => {
+      const startGameResult = await this.startGame(req.params.gameId);
+      if (!ActionResult.isSuccess(startGameResult)) {
+        res.status(400);
+        res.json(startGameResult.info);
+      } else {
+        res.status(200);
+        res.json(startGameResult.info.data)
+      }
+    })
 
-      if (req.method === "GET" && isGamesUrl) {
-        if (!gameId) {
-          res.writeHead(404, headers);
-          return res.end('no game id provided');
-        }
-        const loadGameResult = await this.loadGame(gameId);
-        res.writeHead(200, headers);
-        return res.end(JSON.stringify(loadGameResult.info.data));
+    this._server.post('/api/games/:gameId/players', async (req, res) => {
+      const addPlayerResult = await this.addPlayer(req.params.gameId, req.body.userId, req.body.symbol);
+      if (!ActionResult.isSuccess(addPlayerResult)) {
+        res.status(400);
+        res.json(addPlayerResult.info);
+      } else {
+        res.status(200);
+        res.json(addPlayerResult.info.data)
       }
-      
-      else if (req.method === "POST" && gameId && path === 'start') {
-        const startGameResult = await this.startGame(gameId);
-        if (!ActionResult.isSuccess(startGameResult)) {
-          res.writeHead(400, headers);
-          return res.end(JSON.stringify(startGameResult.info));
-        }
-        res.writeHead(200, headers);
-        return res.end(JSON.stringify(startGameResult.info.data));
+    })
+    
+    this._server.post('/api/games/:gameId/move', async (req, res) => {
+      const addPlayerResult = await this.makeMove(req.params.gameId, req.body.userId, req.body.coordinates);
+      // TODO: why?
+      // @ts-ignore
+      if (!ActionResult.isSuccess(addPlayerResult)) {
+        res.status(400);
+        res.json(addPlayerResult.info);
+      } else {
+        res.status(200);
+        res.json(addPlayerResult.info.data)
       }
-
-      else if (req.method === "POST" && gameId && path === 'players') {
-        // TODO: do not store it in variable, use stream pipes somehow
-        const requestBody: any[] = [];
-        req.on('data', (chunks) => { requestBody.push(chunks); });      
-        req.on('end', async () => {
-          const reqBody = Buffer.concat(requestBody).toString();
-          const playerToAdd = JSON.parse(reqBody);
-          if (playerToAdd) {
-            const addPlayerResult = await this.addPlayer(gameId, playerToAdd.userId, playerToAdd.symbol);
-            if (!ActionResult.isSuccess(addPlayerResult)) {
-              res.writeHead(400, headers);
-              return res.end(JSON.stringify(addPlayerResult.info));
-            }
-            res.writeHead(200, headers);
-            return res.end(JSON.stringify(addPlayerResult.info.data));
-          }
-          res.writeHead(400, headers);
-          return res.end(JSON.stringify('No player provided'));
-        });
-      }
-
-      else if (req.method === "POST" && gameId && path === 'move') {
-        // TODO: do not store it in variable, use stream pipes somehow
-        const requestBody: any[] = [];
-        req.on('data', (chunks) => { requestBody.push(chunks); });      
-        req.on('end', async () => {
-          const reqBody = Buffer.concat(requestBody).toString();
-          const moveInfo = JSON.parse(reqBody);
-          if (moveInfo) {
-            const makeMoveResult = await this.makeMove(gameId, moveInfo.userId, moveInfo.coordinates);
-            // TODO: why?
-            // @ts-ignore
-            if (!ActionResult.isSuccess(makeMoveResult)) {
-              res.writeHead(400, headers);
-              return res.end(JSON.stringify(makeMoveResult.info));
-            }
-            res.writeHead(200, headers);
-            return res.end(JSON.stringify(makeMoveResult.info.data));
-          }
-          res.writeHead(400, headers);
-          return res.end(JSON.stringify('No move info provided'));
-        });
-      }
-
-      else if (req.method === "POST" && isGamesUrl) {
-        // TODO: do not store it in variable, use stream pipes somehow
-        const requestBody: any = [];
-        req.on('data', (chunks) => { requestBody.push(chunks); });      
-        req.on('end', async () => {
-          const reqBody = Buffer.concat(requestBody).toString();          
-          const createGameResult = await this.createGame(JSON.parse(reqBody) as any|| []);
-          
-          if (!ActionResult.isSuccess(createGameResult)) {
-            res.writeHead(400, headers);
-            return res.end(JSON.stringify(createGameResult.info.data));
-          }
-          res.writeHead(200, headers);
-          return res.end(JSON.stringify(createGameResult.info.data));
-        });
-      }
-      
-      else {
-        res.writeHead(404, headers);
-        return res.end('no such enpoint');
-      }
-
     })    
   }
 

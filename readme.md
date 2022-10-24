@@ -20,3 +20,4 @@ Use `gameUI` to perform actions
 - try express
 - try nest.js
 - add service that could play as computer
+- add swagger

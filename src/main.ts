@@ -1,4 +1,4 @@
-import * as http from 'node:http';
+import express from 'express';
 import { connect } from 'mongoose';
 import dotenv from 'dotenv';
 import { GameController } from "./controller/game.controller";
@@ -16,7 +16,8 @@ async function main () {
   await connect(url, { dbName: 'tic-tac-toe' });
   console.log(`DB connected`);
 
-  const server = await http.createServer().listen(process.env.PORT)
+  const app = express();
+  app.listen(process.env.PORT)
   console.log(`Server running at http://127.0.0.1:${process.env.PORT}/`);
 
   const gameRepository = new GameRepository(
@@ -29,6 +30,6 @@ async function main () {
 
   new GameController(
     gameService,
-    server,
+    app,
   );
 }
