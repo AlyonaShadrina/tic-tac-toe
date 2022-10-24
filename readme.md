@@ -16,6 +16,7 @@ Use `gameUI` to perform actions
 ## TODO
 - add google auth
 - add WS
+- add dto to controller
 - try express
 - try nest.js
 - add service that could play as computer
