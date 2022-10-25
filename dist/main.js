@@ -19,10 +19,6 @@ const game_controller_1 = require("./controller/game.controller");
 const game_service_1 = require("./service/game.service");
 const game_repository_1 = require("./storage/game.repository");
 const game_model_1 = __importDefault(require("./storage/game.model"));
-// const app = express();
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })
 dotenv_1.default.config();
 const url = `mongodb+srv://${process.env.DB_CONFIG_USERNAME}:${process.env.DB_CONFIG_PASSWORD}@gamecluster.gxdid8x.mongodb.net/?retryWrites=true&w=majority`;
 main().catch(err => console.log(err));
@@ -30,7 +26,6 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         yield (0, mongoose_1.connect)(url, { dbName: 'tic-tac-toe' });
         console.log(`DB connected`);
-        // const server = await http.createServer().listen(process.env.PORT)
         const app = (0, express_1.default)();
         app.listen(process.env.PORT);
         console.log(`Server running at http://127.0.0.1:${process.env.PORT}/`);

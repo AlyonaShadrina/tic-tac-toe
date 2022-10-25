@@ -1,26 +1,23 @@
-import express, { Express } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import { ActionResult } from '../domain/ActionResult';
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { IGameService } from "../service/game.service";
 import { IPlayerDBEntity } from "../storage/game.db-entity";
 import { TId } from "../types";
+import { verify } from '../verifyIdToken';
 
-// TODO: userId should be taken from auth info, not from params
+// TODO: check if data in request is valid
 export class GameController {
   constructor(
     private readonly _gameService: IGameService,
     private readonly _server: Express,
   ) {
     this._server.use(express.json());
-    this._server.use(function(req, res, next) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-      res.setHeader('Content-Type', 'application/json');
-      next();
-    });
+    this._server.use(this.setHeaders);
+    this._server.use(this.authenticate);
 
     this._server.post('/api/games', async (req, res) => {     
-      const loadGameResult = await this.createGame(req.body);
+      const loadGameResult = await this.createGame([]);
       if (!ActionResult.isSuccess(loadGameResult)) {
         res.status(400);
         res.json(loadGameResult.info);
@@ -53,7 +50,7 @@ export class GameController {
     })
 
     this._server.post('/api/games/:gameId/players', async (req, res) => {
-      const addPlayerResult = await this.addPlayer(req.params.gameId, req.body.userId, req.body.symbol);
+      const addPlayerResult = await this.addPlayer(req.params.gameId, req.body.authenticatedUserId, req.body.symbol);
       if (!ActionResult.isSuccess(addPlayerResult)) {
         res.status(400);
         res.json(addPlayerResult.info);
@@ -64,7 +61,7 @@ export class GameController {
     })
     
     this._server.post('/api/games/:gameId/move', async (req, res) => {
-      const addPlayerResult = await this.makeMove(req.params.gameId, req.body.userId, req.body.coordinates);
+      const addPlayerResult = await this.makeMove(req.params.gameId, req.body.authenticatedUserId, req.body.coordinates);
       // TODO: why?
       // @ts-ignore
       if (!ActionResult.isSuccess(addPlayerResult)) {
@@ -95,5 +92,36 @@ export class GameController {
 
   async createGame(players: IPlayerDBEntity[]) {
     return this._gameService.createGame(players);
+  }
+
+  private async authenticate(req: Request, res: Response, next: NextFunction) {
+    // TODO: should it really work that way?
+    if (req.method !== 'OPTIONS') {
+      if (req.headers.authorization) {
+        try {
+          const userId = await verify(req.headers.authorization);
+          if (userId) {
+            req.body.authenticatedUserId = userId;
+            next();
+          }
+        } catch (e) {
+          console.log('auth error');
+          res.status(401);
+          res.end();
+        }
+      } else {
+        res.status(401);
+        res.end();
+      }
+    } else {
+      next();
+    }
+  }
+  private setHeaders(req: Request, res: Response, next: NextFunction) {
+    // TODO: research on privacy
+    res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader('Content-Type', 'application/json');
+    next();
   }
 }

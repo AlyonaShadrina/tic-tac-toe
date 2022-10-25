@@ -15,20 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameController = void 0;
 const express_1 = __importDefault(require("express"));
 const ActionResult_1 = require("../domain/ActionResult");
-// TODO: userId should be taken from auth info, not from params
+const verifyIdToken_1 = require("../verifyIdToken");
+// TODO: check if data in request is valid
 class GameController {
     constructor(_gameService, _server) {
         this._gameService = _gameService;
         this._server = _server;
         this._server.use(express_1.default.json());
-        this._server.use(function (req, res, next) {
-            res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
-            res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-            res.setHeader('Content-Type', 'application/json');
-            next();
-        });
+        this._server.use(this.setHeaders);
+        this._server.use(this.authenticate);
         this._server.post('/api/games', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const loadGameResult = yield this.createGame(req.body);
+            const loadGameResult = yield this.createGame([]);
             if (!ActionResult_1.ActionResult.isSuccess(loadGameResult)) {
                 res.status(400);
                 res.json(loadGameResult.info);
@@ -61,7 +58,7 @@ class GameController {
             }
         }));
         this._server.post('/api/games/:gameId/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const addPlayerResult = yield this.addPlayer(req.params.gameId, req.body.userId, req.body.symbol);
+            const addPlayerResult = yield this.addPlayer(req.params.gameId, req.body.authenticatedUserId, req.body.symbol);
             if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
                 res.status(400);
                 res.json(addPlayerResult.info);
@@ -72,7 +69,7 @@ class GameController {
             }
         }));
         this._server.post('/api/games/:gameId/move', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const addPlayerResult = yield this.makeMove(req.params.gameId, req.body.userId, req.body.coordinates);
+            const addPlayerResult = yield this.makeMove(req.params.gameId, req.body.authenticatedUserId, req.body.coordinates);
             // TODO: why?
             // @ts-ignore
             if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
@@ -84,62 +81,6 @@ class GameController {
                 res.json(addPlayerResult.info.data);
             }
         }));
-        // this._server.on('request', async (req, res) => {
-        //   // TODO: looks bad, should be rewritten
-        //   const headers = {
-        //     "Content-Type": "application/json",
-        //     'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'
-        //   };     
-        //   const isGamesUrl = req.url?.includes('/api/games'); 
-        //   const gameId = req.url?.split('/')[3];
-        //   const path = req.url?.split('/')[4];
-        //   else if (req.method === "POST" && gameId && path === 'players') {
-        //     // TODO: do not store it in variable, use stream pipes somehow
-        //     const requestBody: any[] = [];
-        //     req.on('data', (chunks) => { requestBody.push(chunks); });      
-        //     req.on('end', async () => {
-        //       const reqBody = Buffer.concat(requestBody).toString();
-        //       const playerToAdd = JSON.parse(reqBody);
-        //       if (playerToAdd) {
-        //         const addPlayerResult = await this.addPlayer(gameId, playerToAdd.userId, playerToAdd.symbol);
-        //         if (!ActionResult.isSuccess(addPlayerResult)) {
-        //           res.writeHead(400, headers);
-        //           return res.end(JSON.stringify(addPlayerResult.info));
-        //         }
-        //         res.writeHead(200, headers);
-        //         return res.end(JSON.stringify(addPlayerResult.info.data));
-        //       }
-        //       res.writeHead(400, headers);
-        //       return res.end(JSON.stringify('No player provided'));
-        //     });
-        //   }
-        //   else if (req.method === "POST" && gameId && path === 'move') {
-        //     // TODO: do not store it in variable, use stream pipes somehow
-        //     const requestBody: any[] = [];
-        //     req.on('data', (chunks) => { requestBody.push(chunks); });      
-        //     req.on('end', async () => {
-        //       const reqBody = Buffer.concat(requestBody).toString();
-        //       const moveInfo = JSON.parse(reqBody);
-        //       if (moveInfo) {
-        //         const makeMoveResult = await this.makeMove(gameId, moveInfo.userId, moveInfo.coordinates);
-        //         // TODO: why?
-        //         // @ts-ignore
-        //         if (!ActionResult.isSuccess(makeMoveResult)) {
-        //           res.writeHead(400, headers);
-        //           return res.end(JSON.stringify(makeMoveResult.info));
-        //         }
-        //         res.writeHead(200, headers);
-        //         return res.end(JSON.stringify(makeMoveResult.info.data));
-        //       }
-        //       res.writeHead(400, headers);
-        //       return res.end(JSON.stringify('No move info provided'));
-        //     });
-        //   }
-        //   else {
-        //     res.writeHead(404, headers);
-        //     return res.end('no such enpoint');
-        //   }
-        // })    
     }
     loadGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -165,6 +106,41 @@ class GameController {
         return __awaiter(this, void 0, void 0, function* () {
             return this._gameService.createGame(players);
         });
+    }
+    authenticate(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // TODO: should it really work that way?
+            if (req.method !== 'OPTIONS') {
+                if (req.headers.authorization) {
+                    try {
+                        const userId = yield (0, verifyIdToken_1.verify)(req.headers.authorization);
+                        if (userId) {
+                            req.body.authenticatedUserId = userId;
+                            next();
+                        }
+                    }
+                    catch (e) {
+                        console.log('auth error');
+                        res.status(401);
+                        res.end();
+                    }
+                }
+                else {
+                    res.status(401);
+                    res.end();
+                }
+            }
+            else {
+                next();
+            }
+        });
+    }
+    setHeaders(req, res, next) {
+        // TODO: research on privacy
+        res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        res.setHeader('Content-Type', 'application/json');
+        next();
     }
 }
 exports.GameController = GameController;
