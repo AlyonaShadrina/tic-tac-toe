@@ -10,13 +10,19 @@
   <style>
     body {
       font-family: monospace;
+      text-align: center;
+    }
+    .content > div {
+      margin: 2rem auto;
     }
     #game {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      text-align: center;
       font-size: 4rem;
       max-width: 20rem;
+    }
+    #error {
+      color: red;
     }
   </style>
   <script src="https://accounts.google.com/gsi/client" defer></script>
@@ -25,11 +31,14 @@
     window.onload = renderUI();
   </script>
   <script src="https://cdn.socket.io/4.5.3/socket.io.min.js" integrity="sha384-WPFUvHkB1aHA5TDSZi6xtDgkF0wXJcIIxXhC6h8OT8EH3fC5PWro5pWJ1THjcfEi" crossorigin="anonymous"></script>
-  <div id="buttonDiv"></div>
-  <div id="createGame"></div>
-  <div id="symbol"></div>
-  <div id="startGame"></div>
-  <div id="status"></div>
-  <div id="game"></div>
+  <div class="content">
+    <div id="buttonDiv"></div>
+    <div id="createGame"></div>
+    <div id="symbol"></div>
+    <div id="startGame"></div>
+    <div id="game"></div>
+    <div id="status"></div>
+    <div id="error"></div>
+  </div>
 </body>
 </html>

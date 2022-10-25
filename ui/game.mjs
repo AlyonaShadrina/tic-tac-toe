@@ -2,7 +2,7 @@ import Cookies from './js.cookie.min.mjs';
 import { parseJwt } from './auth.mjs';
 
 class UI {
-  constructor(gameId) {
+  constructor() {
     this.game = null;
     this.gameId = new URLSearchParams(window.location.search).get('game_id');
     if (this.gameId) {
@@ -32,6 +32,9 @@ class UI {
         });
         if (result.ok) {
           this.game = await result.json();
+        } else {
+          const data = await result.json();
+          this.printErrorMessage(data.message);
         }
       } catch (e) {
         this.gameId = null;
@@ -51,22 +54,12 @@ class UI {
         }
       });
       if (result.ok) {
-        this.loadGame();
+        // this.loadGame();
+      } else {
+        const data = await result.json();
+        this.printErrorMessage(data.message);
       }
     }
-  }
-  
-  addOpponentMove({ currentPlayerMoveIndex, fieldCell: {coordinates, symbol}, status}) {
-    this.game.currentPlayerMoveIndex = currentPlayerMoveIndex;
-    this.game.field = { ...this.game.field, [JSON.stringify(coordinates)]: symbol };
-    this.game.status = status;
-    console.log('addOpponentMove', this.game);
-    this.printUI();  
-  }
-  setStatusToInProgress() {
-    this.game.status = 'in_progress';
-    console.log('setStatusToInProgress', this.game);
-    this.printUI();  
   }
 
   async addPlayer(symbol) {
@@ -81,6 +74,9 @@ class UI {
       });
       if (result.ok) {
         this.loadGame();
+      } else {
+        const data = await result.json();
+        this.printErrorMessage(data.message);
       }
     }
   }
@@ -94,7 +90,10 @@ class UI {
         }
       });
       if (result.ok) {
-        this.loadGame();
+        // this.loadGame();
+      } else {
+        const data = await result.json();
+        this.printErrorMessage(data.message);
       }
     }
   }
@@ -112,7 +111,23 @@ class UI {
       this.gameId = (await result.json()).id;
       window.location.search = `game_id=${this.gameId}`;
       this.loadGame();
+    } else {
+      const data = await result.json();
+      this.printErrorMessage(data.message);
     }
+  }
+
+  addOpponentMove({ currentPlayerMoveIndex, fieldCell: {coordinates, symbol}, status}) {
+    this.game.currentPlayerMoveIndex = currentPlayerMoveIndex;
+    this.game.field = { ...this.game.field, [JSON.stringify(coordinates)]: symbol };
+    this.game.status = status;
+    console.log('addOpponentMove', this.game);
+    this.printUI();  
+  }
+  setStatusToInProgress() {
+    this.game.status = 'in_progress';
+    console.log('setStatusToInProgress', this.game);
+    this.printUI();  
   }
 
   printUI() {
@@ -121,15 +136,15 @@ class UI {
     this.printStartGameButton();
     this.printField();
     this.printStatus();
+    this.clearErrorMessage();
   }
 
   printStatus() {
     console.log('game status: ', this.game?.status);
-    if (!this.game) {
-      return
+    if (this.game?.status === 'finished') {
+      const statusElement = document.getElementById('status');
+      statusElement.innerText = `Game over`;
     }
-    const statusElement = document.getElementById('status');
-    statusElement.innerText = `status: ${this.game?.status || '--'}`;
   }
 
   printField() {
@@ -168,6 +183,7 @@ class UI {
       cell.textContent = cells[coordinates];
       if (this.game?.status === 'in_progress') {
         cell.addEventListener('click', cellClickListener(coordinates));
+        cell.style.cursor = 'pointer';
       }
       fragment.appendChild(cell);
     })
@@ -186,7 +202,7 @@ class UI {
     if (this.game?.status === 'created') {
       const player = checkGameHasUser();
       if (player) {
-        symbolElement.innerHTML = player.symbol;
+        symbolElement.innerHTML = `Your symbol is ${player.symbol}`;
       } else {
         const fragment = document.createDocumentFragment();
         const input = document.createElement('input');
@@ -231,6 +247,17 @@ class UI {
 
       createGameElement.append(button)
     }
+  }
+  printErrorMessage(text) {
+    const errorElement = document.getElementById('error');
+    errorElement.innerHTML = text;
+    setTimeout(() => {
+      errorElement.innerHTML = '';
+    }, 5000)
+  }
+  clearErrorMessage() {
+    const errorElement = document.getElementById('error');
+    errorElement.innerHTML = '';
   }
 }
 
