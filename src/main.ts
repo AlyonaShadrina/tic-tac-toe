@@ -1,6 +1,8 @@
 import express from 'express';
 import { connect } from 'mongoose';
 import dotenv from 'dotenv';
+import http from 'node:http';
+import { Server } from "socket.io";
 import { GameController } from "./controller/game.controller";
 import { GameService } from "./service/game.service";
 import { GameRepository } from "./storage/game.repository";
@@ -17,7 +19,13 @@ async function main () {
   console.log(`DB connected`);
 
   const app = express();
-  app.listen(process.env.PORT)
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: process.env.HEADER_CORS_ALLOWED || '',
+    }
+  });
+  server.listen(process.env.PORT)
   console.log(`Server running at http://127.0.0.1:${process.env.PORT}/`);
 
   const gameRepository = new GameRepository(
@@ -31,5 +39,6 @@ async function main () {
   new GameController(
     gameService,
     app,
+    io,
   );
 }

@@ -10,6 +10,16 @@ class UI {
     } else {
       this.printUI();
     }
+    var socket = io("http://127.0.0.1:3000");
+
+    socket.on(`${this.gameId}_move`, (moveInfo) => {
+      console.log('move', moveInfo); // x8WIv7-mJelg7on_ALbx
+      this.addOpponentMove(moveInfo)
+    });
+    socket.on(`${this.gameId}_start `, () => {
+      console.log('start'); // x8WIv7-mJelg7on_ALbx
+      this.setStatusToInProgress()
+    });
   }
 
   async loadGame() {
@@ -44,6 +54,19 @@ class UI {
         this.loadGame();
       }
     }
+  }
+  
+  addOpponentMove({ currentPlayerMoveIndex, fieldCell: {coordinates, symbol}, status}) {
+    this.game.currentPlayerMoveIndex = currentPlayerMoveIndex;
+    this.game.field = { ...this.game.field, [JSON.stringify(coordinates)]: symbol };
+    this.game.status = status;
+    console.log('addOpponentMove', this.game);
+    this.printUI();  
+  }
+  setStatusToInProgress() {
+    this.game.status = 'in_progress';
+    console.log('setStatusToInProgress', this.game);
+    this.printUI();  
   }
 
   async addPlayer(symbol) {

@@ -19,6 +19,8 @@ const game_controller_1 = require("./controller/game.controller");
 const game_service_1 = require("./service/game.service");
 const game_repository_1 = require("./storage/game.repository");
 const game_model_1 = __importDefault(require("./storage/game.model"));
+const node_http_1 = __importDefault(require("node:http"));
+const socket_io_1 = require("socket.io");
 dotenv_1.default.config();
 const url = `mongodb+srv://${process.env.DB_CONFIG_USERNAME}:${process.env.DB_CONFIG_PASSWORD}@gamecluster.gxdid8x.mongodb.net/?retryWrites=true&w=majority`;
 main().catch(err => console.log(err));
@@ -27,10 +29,16 @@ function main() {
         yield (0, mongoose_1.connect)(url, { dbName: 'tic-tac-toe' });
         console.log(`DB connected`);
         const app = (0, express_1.default)();
-        app.listen(process.env.PORT);
+        const server = node_http_1.default.createServer(app);
+        const io = new socket_io_1.Server(server, {
+            cors: {
+                origin: process.env.HEADER_CORS_ALLOWED || '',
+            }
+        });
+        server.listen(process.env.PORT);
         console.log(`Server running at http://127.0.0.1:${process.env.PORT}/`);
         const gameRepository = new game_repository_1.GameRepository(game_model_1.default);
         const gameService = new game_service_1.GameService(gameRepository);
-        new game_controller_1.GameController(gameService, app);
+        new game_controller_1.GameController(gameService, app, io);
     });
 }

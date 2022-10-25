@@ -7,17 +7,24 @@ npm i
 npm run build:start           // start backend server
 npm run start frontent-server // start frontend server
 ```
-In your browser go to http://127.0.0.1:8080 and open dev console.
+In your browser go to http://localhost:8080.
 
 ## Play game
 
-Use `gameUI` to perform actions
+1. Go to http://localhost:8080 in browser #1
+2. Login
+3. Create game
+4. Set your symbol
+5. Copy link
+6. Open link in browser #2
+7. Login as other google user in browser #2
+8. Set another symbol in browser #2
+9. Start game in any browser
+10. The first move belongs to player in browser #1
 
 ## TODO
-- add google auth
-- add WS
 - add dto to controller
-- try express
 - try nest.js
 - add service that could play as computer
 - add swagger
+- handle errors

@@ -1,4 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
+import { Server } from 'socket.io';
 import { ActionResult } from '../domain/ActionResult';
 import { TCoordinates, TFieldSymbol } from "../domain/types";
 import { IGameService } from "../service/game.service";
@@ -10,13 +11,14 @@ import { verify } from '../verifyIdToken';
 export class GameController {
   constructor(
     private readonly _gameService: IGameService,
-    private readonly _server: Express,
+    private readonly _app: Express,
+    private readonly _io: Server,
   ) {
-    this._server.use(express.json());
-    this._server.use(this.setHeaders);
-    this._server.use(this.authenticate);
-
-    this._server.post('/api/games', async (req, res) => {     
+    this._app.use(express.json());
+    this._app.use(this.setHeaders);
+    this._app.use(this.authenticate);
+    
+    this._app.post('/api/games', async (req, res) => {     
       const loadGameResult = await this.createGame([]);
       if (!ActionResult.isSuccess(loadGameResult)) {
         res.status(400);
@@ -27,7 +29,7 @@ export class GameController {
       }
     })
     
-    this._server.get('/api/games/:gameId', async (req, res) => {
+    this._app.get('/api/games/:gameId', async (req, res) => {
       const loadGameResult = await this.loadGame(req.params.gameId);
       if (!ActionResult.isSuccess(loadGameResult)) {
         res.status(404);
@@ -38,7 +40,7 @@ export class GameController {
       }
     })
     
-    this._server.post('/api/games/:gameId/start', async (req, res) => {
+    this._app.post('/api/games/:gameId/start', async (req, res) => {
       const startGameResult = await this.startGame(req.params.gameId);
       if (!ActionResult.isSuccess(startGameResult)) {
         res.status(400);
@@ -46,10 +48,11 @@ export class GameController {
       } else {
         res.status(200);
         res.json(startGameResult.info.data)
+        this._io.emit(`${req.params.gameId}_start`);
       }
     })
 
-    this._server.post('/api/games/:gameId/players', async (req, res) => {
+    this._app.post('/api/games/:gameId/players', async (req, res) => {
       const addPlayerResult = await this.addPlayer(req.params.gameId, req.body.authenticatedUserId, req.body.symbol);
       if (!ActionResult.isSuccess(addPlayerResult)) {
         res.status(400);
@@ -60,7 +63,7 @@ export class GameController {
       }
     })
     
-    this._server.post('/api/games/:gameId/move', async (req, res) => {
+    this._app.post('/api/games/:gameId/move', async (req, res) => {
       const addPlayerResult = await this.makeMove(req.params.gameId, req.body.authenticatedUserId, req.body.coordinates);
       // TODO: why?
       // @ts-ignore
@@ -70,6 +73,7 @@ export class GameController {
       } else {
         res.status(200);
         res.json(addPlayerResult.info.data)
+        this._io.emit(`${req.params.gameId}_move`, addPlayerResult.info.data);
       }
     })    
   }

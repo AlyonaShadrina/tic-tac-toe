@@ -16,15 +16,17 @@ exports.GameController = void 0;
 const express_1 = __importDefault(require("express"));
 const ActionResult_1 = require("../domain/ActionResult");
 const verifyIdToken_1 = require("../verifyIdToken");
+// const server = http.createServer(app);
 // TODO: check if data in request is valid
 class GameController {
-    constructor(_gameService, _server) {
+    constructor(_gameService, _app, _io) {
         this._gameService = _gameService;
-        this._server = _server;
-        this._server.use(express_1.default.json());
-        this._server.use(this.setHeaders);
-        this._server.use(this.authenticate);
-        this._server.post('/api/games', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this._app = _app;
+        this._io = _io;
+        this._app.use(express_1.default.json());
+        this._app.use(this.setHeaders);
+        this._app.use(this.authenticate);
+        this._app.post('/api/games', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const loadGameResult = yield this.createGame([]);
             if (!ActionResult_1.ActionResult.isSuccess(loadGameResult)) {
                 res.status(400);
@@ -35,7 +37,7 @@ class GameController {
                 res.json(loadGameResult.info.data);
             }
         }));
-        this._server.get('/api/games/:gameId', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this._app.get('/api/games/:gameId', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const loadGameResult = yield this.loadGame(req.params.gameId);
             if (!ActionResult_1.ActionResult.isSuccess(loadGameResult)) {
                 res.status(404);
@@ -46,7 +48,7 @@ class GameController {
                 res.json(loadGameResult.info.data);
             }
         }));
-        this._server.post('/api/games/:gameId/start', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this._app.post('/api/games/:gameId/start', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const startGameResult = yield this.startGame(req.params.gameId);
             if (!ActionResult_1.ActionResult.isSuccess(startGameResult)) {
                 res.status(400);
@@ -55,9 +57,10 @@ class GameController {
             else {
                 res.status(200);
                 res.json(startGameResult.info.data);
+                this._io.emit(`${req.params.gameId}_start`);
             }
         }));
-        this._server.post('/api/games/:gameId/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this._app.post('/api/games/:gameId/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const addPlayerResult = yield this.addPlayer(req.params.gameId, req.body.authenticatedUserId, req.body.symbol);
             if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
                 res.status(400);
@@ -68,7 +71,7 @@ class GameController {
                 res.json(addPlayerResult.info.data);
             }
         }));
-        this._server.post('/api/games/:gameId/move', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        this._app.post('/api/games/:gameId/move', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const addPlayerResult = yield this.makeMove(req.params.gameId, req.body.authenticatedUserId, req.body.coordinates);
             // TODO: why?
             // @ts-ignore
@@ -79,6 +82,7 @@ class GameController {
             else {
                 res.status(200);
                 res.json(addPlayerResult.info.data);
+                this._io.emit(`${req.params.gameId}_move`, addPlayerResult.info.data);
             }
         }));
     }
