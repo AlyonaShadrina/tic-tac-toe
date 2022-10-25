@@ -17,9 +17,13 @@ export class GameRepository implements IGameRepository {
     private readonly _gameModel: typeof GameModel,
   ) {}
   async find(gameId: TId): Promise<GameDBEntity | null> {
-    const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) });
-    // TODO: .toObject() or .lean()?
-    return result ? result.toObject({ getters: true }) : result
+    try {
+      const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) });
+      // TODO: .toObject() or .lean()?
+      return result ? result.toObject({ getters: true }) : result
+    } catch (e) {
+      return null;
+    } 
   }
 
   async update(gameId: TId, gameUpdates: TMakeMoveUpdates) {

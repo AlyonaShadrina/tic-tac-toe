@@ -17,9 +17,14 @@ class GameRepository {
     }
     find(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this._gameModel.findOne({ _id: new mongodb_1.ObjectId(gameId) });
-            // TODO: .toObject() or .lean()?
-            return result ? result.toObject({ getters: true }) : result;
+            try {
+                const result = yield this._gameModel.findOne({ _id: new mongodb_1.ObjectId(gameId) });
+                // TODO: .toObject() or .lean()?
+                return result ? result.toObject({ getters: true }) : result;
+            }
+            catch (e) {
+                return null;
+            }
         });
     }
     update(gameId, gameUpdates) {

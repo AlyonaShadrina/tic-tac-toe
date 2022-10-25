@@ -4,19 +4,28 @@ import { parseJwt } from './auth.mjs';
 class UI {
   constructor(gameId) {
     this.game = null;
-    this.gameId = gameId;
-
-    this.printUI();
+    this.gameId = new URLSearchParams(window.location.search).get('game_id');
+    if (this.gameId) {
+      this.loadGame();
+    } else {
+      this.printUI();
+    }
   }
 
   async loadGame() {
     if (this.gameId) {
-      const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}`, {
-        headers: {
-          Authorization: Cookies.get('goauth'),
+      try {
+        const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}`, {
+          headers: {
+            Authorization: Cookies.get('goauth'),
+          }
+        });
+        if (result.ok) {
+          this.game = await result.json();
         }
-      });
-      this.game = await result.json();
+      } catch (e) {
+        this.gameId = null;
+      }
       this.printUI();
     }
   }
@@ -78,6 +87,7 @@ class UI {
     });
     if (result.ok) {
       this.gameId = (await result.json()).id;
+      window.location.search = `game_id=${this.gameId}`;
       this.loadGame();
     }
   }

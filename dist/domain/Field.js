@@ -33,6 +33,7 @@ class Field {
         }
         return new ActionResult_1.ActionResultError('Coordinates are not available', null);
     }
+    // TODO: has bug: doesn't consider win when win `coordinates` are [0, 0]
     hasNSymbolsInRow(coordinates, symbol, n) {
         // get all surronding cells
         const potentialySurroundingCoordinates = [
