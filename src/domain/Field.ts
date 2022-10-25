@@ -42,6 +42,7 @@ export class Field implements IField {
     return new ActionResultError('Coordinates are not available', null);
   }
 
+  // TODO: has bug: doesn't consider win when win `coordinates` are [0, 0]
   hasNSymbolsInRow(coordinates: [number, number], symbol: string, n: number): boolean {
     // get all surronding cells
     const potentialySurroundingCoordinates = [

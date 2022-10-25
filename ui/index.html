@@ -7,11 +7,28 @@
   <title>Document</title>
 </head>
 <body>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body {
+      font-family: monospace;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+      font-size: 4rem;
+      max-width: 20rem;
+    }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" defer></script>
   <script type="module">
     import { renderUI } from './ui.mjs';
     window.onload = renderUI();
   </script>
   <div id="buttonDiv"></div>
+  <div id="createGame"></div>
+  <div id="symbol"></div>
+  <div id="startGame"></div>
+  <div id="status"></div>
+  <div id="game"></div>
 </body>
 </html>

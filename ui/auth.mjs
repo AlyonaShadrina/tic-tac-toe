@@ -1,7 +1,7 @@
 import Cookies from './js.cookie.min.mjs'
 import { renderUI } from './ui.mjs';
 
-function parseJwt (token) {
+export function parseJwt (token) {
   var base64Url = token.split('.')[1];
   var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
   var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
@@ -18,7 +18,8 @@ function handleCredentialResponse(response) {
     sameSite: 'strict',
     expires: new Date(tokenDecoded.exp * 1000)
   });
-  renderUI()
+  document.getElementById('buttonDiv').innerText = '';
+  renderUI();
 }
 export function renderAuthButton() {
     google.accounts.id.initialize({
