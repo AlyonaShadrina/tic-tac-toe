@@ -7,19 +7,10 @@ class UI {
     this.gameId = new URLSearchParams(window.location.search).get('game_id');
     if (this.gameId) {
       this.loadGame();
+      this.listenToGameUpdates();
     } else {
       this.printUI();
     }
-    var socket = io("http://127.0.0.1:3000");
-
-    socket.on(`${this.gameId}_move`, (moveInfo) => {
-      console.log('move', moveInfo); // x8WIv7-mJelg7on_ALbx
-      this.addOpponentMove(moveInfo)
-    });
-    socket.on(`${this.gameId}_start `, () => {
-      console.log('start'); // x8WIv7-mJelg7on_ALbx
-      this.setStatusToInProgress()
-    });
   }
 
   async loadGame() {
@@ -53,9 +44,7 @@ class UI {
           Authorization: Cookies.get('goauth'),
         }
       });
-      if (result.ok) {
-        // this.loadGame();
-      } else {
+      if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
       }
@@ -72,9 +61,7 @@ class UI {
           Authorization: Cookies.get('goauth'),
         }
       });
-      if (result.ok) {
-        this.loadGame();
-      } else {
+      if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
       }
@@ -90,8 +77,6 @@ class UI {
         }
       });
       if (result.ok) {
-        // this.loadGame();
-      } else {
         const data = await result.json();
         this.printErrorMessage(data.message);
       }
@@ -109,8 +94,10 @@ class UI {
     });
     if (result.ok) {
       this.gameId = (await result.json()).id;
-      window.location.search = `game_id=${this.gameId}`;
+      window.history.replaceState({}, "", decodeURIComponent(`${window.location.pathname}?game_id=${this.gameId}`));
+      // TODO: not load, just set from response
       this.loadGame();
+      this.listenToGameUpdates();
     } else {
       const data = await result.json();
       this.printErrorMessage(data.message);
@@ -127,6 +114,12 @@ class UI {
   setStatusToInProgress() {
     this.game.status = 'in_progress';
     console.log('setStatusToInProgress', this.game);
+    this.printUI();  
+  }
+  addOpponentPlayer(playerInfo) {
+    const { index, ...player } = playerInfo;
+    this.game.players[index] = player;
+    console.log('addOpponentPlayer', this.game);
     this.printUI();  
   }
 
@@ -164,7 +157,7 @@ class UI {
     `);
 
     const gameElement = document.getElementById('game');
-    gameElement.innerHTML = '';
+    gameElement.innerText = '';
 
     const coordinatedArray = [
       '[-1,1]', '[0,1]', '[1,1]',
@@ -193,7 +186,7 @@ class UI {
 
   printSymbolInput() {
     const symbolElement = document.getElementById('symbol');
-    symbolElement.innerHTML = '';
+    symbolElement.innerText = '';
     
     const checkGameHasUser = () => {
       return this.game.players.find(player => player.userId === parseJwt(Cookies.get('goauth')).sub)
@@ -202,7 +195,7 @@ class UI {
     if (this.game?.status === 'created') {
       const player = checkGameHasUser();
       if (player) {
-        symbolElement.innerHTML = `Your symbol is ${player.symbol}`;
+        symbolElement.innerText = `Your symbol is ${player.symbol}`;
       } else {
         const fragment = document.createDocumentFragment();
         const input = document.createElement('input');
@@ -222,7 +215,7 @@ class UI {
 
   printStartGameButton() {
     const startGameElement = document.getElementById('startGame');
-    startGameElement.innerHTML = '';
+    startGameElement.innerText = '';
 
     if (this.game?.status === 'created') {
       const button = document.createElement('button');
@@ -236,7 +229,7 @@ class UI {
   }
   printCreateGameButton() {
     const createGameElement = document.getElementById('createGame');
-    createGameElement.innerHTML = '';
+    createGameElement.innerText = '';
 
     if (!this.game) {
       const button = document.createElement('button');
@@ -250,14 +243,27 @@ class UI {
   }
   printErrorMessage(text) {
     const errorElement = document.getElementById('error');
-    errorElement.innerHTML = text;
+    errorElement.innerText = text;
     setTimeout(() => {
-      errorElement.innerHTML = '';
+      errorElement.innerText = '';
     }, 5000)
   }
   clearErrorMessage() {
     const errorElement = document.getElementById('error');
-    errorElement.innerHTML = '';
+    errorElement.innerText = '';
+  }
+
+  listenToGameUpdates() {
+    const socket = io("http://127.0.0.1:3000");
+    socket.on(`${this.gameId}_move`, (moveInfo) => {
+      this.addOpponentMove(moveInfo)
+    });
+    socket.on(`${this.gameId}_start`, () => {
+      this.setStatusToInProgress()
+    });
+    socket.on(`${this.gameId}_player`, (playerInfo) => {
+      this.addOpponentPlayer(playerInfo)
+    });
   }
 }
 

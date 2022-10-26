@@ -17,7 +17,6 @@ const express_1 = __importDefault(require("express"));
 const express_validator_1 = require("express-validator");
 const ActionResult_1 = require("../domain/ActionResult");
 const verifyIdToken_1 = require("../verifyIdToken");
-// TODO: check if data in request is valid
 class GameController {
     constructor(_gameService, _app, _io) {
         this._gameService = _gameService;
@@ -70,20 +69,11 @@ class GameController {
             else {
                 res.status(200);
                 res.json(addPlayerResult.info.data);
+                this._io.emit(`${req.params.gameId}_player`, addPlayerResult.info.data);
             }
         }));
         this._app.post('/api/games/:gameId/move', (0, express_validator_1.checkSchema)({
             coordinates: {
-                // isArray: {
-                //   options: {
-                //     min: 2,
-                //     max: 2,
-                //   },
-                //   if: ([x, y]: unknown[]) => {
-                //     return Number.isInteger(x) && Number.isInteger(y);
-                //   },
-                //   errorMessage: 'Wrong coordinates',
-                // },
                 custom: {
                     options: (coordinates) => {
                         if (Array.isArray(coordinates) && coordinates.length === 2) {
@@ -97,17 +87,17 @@ class GameController {
             },
         }), this.validateRequest, (req, res) => __awaiter(this, void 0, void 0, function* () {
             var _b, _c;
-            const addPlayerResult = yield this.makeMove((_b = req.params) === null || _b === void 0 ? void 0 : _b.gameId, req.body.authenticatedUserId, req.body.coordinates);
+            const makeMoveResult = yield this.makeMove((_b = req.params) === null || _b === void 0 ? void 0 : _b.gameId, req.body.authenticatedUserId, req.body.coordinates);
             // TODO: why?
             // @ts-ignore
-            if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
+            if (!ActionResult_1.ActionResult.isSuccess(makeMoveResult)) {
                 res.status(400);
-                res.json(addPlayerResult.info);
+                res.json(makeMoveResult.info);
             }
             else {
                 res.status(200);
-                res.json(addPlayerResult.info.data);
-                this._io.emit(`${(_c = req.params) === null || _c === void 0 ? void 0 : _c.gameId}_move`, addPlayerResult.info.data);
+                res.json(makeMoveResult.info.data);
+                this._io.emit(`${(_c = req.params) === null || _c === void 0 ? void 0 : _c.gameId}_move`, makeMoveResult.info.data);
             }
         }));
     }

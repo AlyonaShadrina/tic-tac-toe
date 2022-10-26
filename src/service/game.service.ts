@@ -13,7 +13,7 @@ export interface IGameService {
   loadGame(gameId: TId): Promise<ActionResultSuccess<GameDBEntity> | ActionResultError<null>>;
   startGame(gameId: TId): Promise<ReturnType<Game['startGame']>>;
   makeMove(move: TMoveInfo): Promise<ReturnType<Game['makeMove']>>;
-  addPlayer(move: TAddPlayerInfo): Promise<ReturnType<Game['addPlayer']>>;
+  addPlayer(move: TAddPlayerInfo): Promise<ReturnType<Game['addPlayer']> | ActionResultSuccess<IPlayerDBEntity & { index: number }>>;
   createGame(players: IPlayerDBEntity[]): Promise<ActionResultSuccess<GameDBEntity>>;
 }
 
@@ -63,6 +63,7 @@ export class GameService implements IGameService {
 
     if (ActionResult.isSuccess(addResult)) {
       await this._gameRepository.addPlayer(gameId, { userId: userId, symbol });
+      return new ActionResultSuccess(`Player with symbol "${symbol}" added`, { userId: userId, symbol, index: game.players.length })
     }
 
     return addResult;

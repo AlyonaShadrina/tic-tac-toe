@@ -58,6 +58,7 @@ class GameService {
             const addResult = domainGame.addPlayer({ symbol });
             if (ActionResult_1.ActionResult.isSuccess(addResult)) {
                 yield this._gameRepository.addPlayer(gameId, { userId: userId, symbol });
+                return new ActionResult_1.ActionResultSuccess(`Player with symbol "${symbol}" added`, { userId: userId, symbol, index: game.players.length });
             }
             return addResult;
         });

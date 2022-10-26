@@ -8,7 +8,6 @@ import { IPlayerDBEntity } from "../storage/game.db-entity";
 import { TId } from "../types";
 import { verify } from '../verifyIdToken';
 
-// TODO: check if data in request is valid
 export class GameController {
   constructor(
     private readonly _gameService: IGameService,
@@ -65,6 +64,7 @@ export class GameController {
         } else {
           res.status(200);
           res.json(addPlayerResult.info.data)
+          this._io.emit(`${req.params.gameId}_player`, addPlayerResult.info.data);
         }
       }
     )
@@ -87,16 +87,16 @@ export class GameController {
       }),
       this.validateRequest,
       async (req: Request, res: Response) => {
-        const addPlayerResult = await this.makeMove(req.params?.gameId, req.body.authenticatedUserId, req.body.coordinates);
+        const makeMoveResult = await this.makeMove(req.params?.gameId, req.body.authenticatedUserId, req.body.coordinates);
         // TODO: why?
         // @ts-ignore
-        if (!ActionResult.isSuccess(addPlayerResult)) {
+        if (!ActionResult.isSuccess(makeMoveResult)) {
           res.status(400);
-          res.json(addPlayerResult.info);
+          res.json(makeMoveResult.info);
         } else {
           res.status(200);
-          res.json(addPlayerResult.info.data)
-          this._io.emit(`${req.params?.gameId}_move`, addPlayerResult.info.data);
+          res.json(makeMoveResult.info.data)
+          this._io.emit(`${req.params?.gameId}_move`, makeMoveResult.info.data);
         }
       }
     )    
