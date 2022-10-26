@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameController = void 0;
 const express_1 = __importDefault(require("express"));
+const express_validator_1 = require("express-validator");
 const ActionResult_1 = require("../domain/ActionResult");
 const verifyIdToken_1 = require("../verifyIdToken");
-// const server = http.createServer(app);
 // TODO: check if data in request is valid
 class GameController {
     constructor(_gameService, _app, _io) {
@@ -60,8 +60,9 @@ class GameController {
                 this._io.emit(`${req.params.gameId}_start`);
             }
         }));
-        this._app.post('/api/games/:gameId/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const addPlayerResult = yield this.addPlayer(req.params.gameId, req.body.authenticatedUserId, req.body.symbol);
+        this._app.post('/api/games/:gameId/players', (0, express_validator_1.body)('symbol', 'Symbol is required').isString().not().isEmpty(), this.validateRequest, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const addPlayerResult = yield this.addPlayer((_a = req.params) === null || _a === void 0 ? void 0 : _a.gameId, req.body.authenticatedUserId, req.body.symbol);
             if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
                 res.status(400);
                 res.json(addPlayerResult.info);
@@ -71,8 +72,32 @@ class GameController {
                 res.json(addPlayerResult.info.data);
             }
         }));
-        this._app.post('/api/games/:gameId/move', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const addPlayerResult = yield this.makeMove(req.params.gameId, req.body.authenticatedUserId, req.body.coordinates);
+        this._app.post('/api/games/:gameId/move', (0, express_validator_1.checkSchema)({
+            coordinates: {
+                // isArray: {
+                //   options: {
+                //     min: 2,
+                //     max: 2,
+                //   },
+                //   if: ([x, y]: unknown[]) => {
+                //     return Number.isInteger(x) && Number.isInteger(y);
+                //   },
+                //   errorMessage: 'Wrong coordinates',
+                // },
+                custom: {
+                    options: (coordinates) => {
+                        if (Array.isArray(coordinates) && coordinates.length === 2) {
+                            const [x, y] = coordinates;
+                            return Number.isInteger(x) && Number.isInteger(y);
+                        }
+                        return false;
+                    },
+                    errorMessage: 'Wrong coordinates',
+                },
+            },
+        }), this.validateRequest, (req, res) => __awaiter(this, void 0, void 0, function* () {
+            var _b, _c;
+            const addPlayerResult = yield this.makeMove((_b = req.params) === null || _b === void 0 ? void 0 : _b.gameId, req.body.authenticatedUserId, req.body.coordinates);
             // TODO: why?
             // @ts-ignore
             if (!ActionResult_1.ActionResult.isSuccess(addPlayerResult)) {
@@ -82,7 +107,7 @@ class GameController {
             else {
                 res.status(200);
                 res.json(addPlayerResult.info.data);
-                this._io.emit(`${req.params.gameId}_move`, addPlayerResult.info.data);
+                this._io.emit(`${(_c = req.params) === null || _c === void 0 ? void 0 : _c.gameId}_move`, addPlayerResult.info.data);
             }
         }));
     }
@@ -144,6 +169,14 @@ class GameController {
         res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
         res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         res.setHeader('Content-Type', 'application/json');
+        next();
+    }
+    validateRequest(req, res, next) {
+        const errors = (0, express_validator_1.validationResult)(req);
+        if (!errors.isEmpty()) {
+            const formattedError = errors.formatWith(({ msg }) => msg);
+            return res.status(400).json({ data: formattedError.mapped(), message: formattedError.array().join('. ') });
+        }
         next();
     }
 }
