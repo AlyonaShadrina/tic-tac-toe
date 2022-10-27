@@ -33,11 +33,8 @@ class GameService {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
             }
             const player = game.players.find(player => player.userId === userId);
-            // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const moveResult = domainGame.makeMove(coordinates, player === null || player === void 0 ? void 0 : player.symbol);
-            // TODO: why?
-            // @ts-ignore
             if (ActionResult_1.ActionResult.isSuccess(moveResult)) {
                 yield this._gameRepository.update(gameId, moveResult.info.data);
             }
@@ -53,7 +50,6 @@ class GameService {
             if (game.players.find(player => player.userId === userId)) {
                 return new ActionResult_1.ActionResultError('Player already registered in game', null);
             }
-            // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const addResult = domainGame.addPlayer({ symbol });
             if (ActionResult_1.ActionResult.isSuccess(addResult)) {
@@ -69,7 +65,6 @@ class GameService {
             if (!game) {
                 return new ActionResult_1.ActionResultError('No game with provided id found', null);
             }
-            // TODO: inject GameMapper? 
             const domainGame = game_mapper_1.GameMapper.mapToDomainGame(game);
             const startResult = domainGame.startGame();
             if (ActionResult_1.ActionResult.isSuccess(startResult)) {

@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameController = void 0;
 const express_1 = __importDefault(require("express"));
 const express_validator_1 = require("express-validator");
+const helmet_1 = __importDefault(require("helmet"));
 const ActionResult_1 = require("../domain/ActionResult");
 const verifyIdToken_1 = require("../verifyIdToken");
 class GameController {
@@ -23,6 +24,7 @@ class GameController {
         this._app = _app;
         this._io = _io;
         this._app.use(express_1.default.json());
+        this._app.use((0, helmet_1.default)());
         this._app.use(this.setHeaders);
         this._app.use(this.authenticate);
         this._app.post('/api/games', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -88,8 +90,6 @@ class GameController {
         }), this.validateRequest, (req, res) => __awaiter(this, void 0, void 0, function* () {
             var _b, _c;
             const makeMoveResult = yield this.makeMove((_b = req.params) === null || _b === void 0 ? void 0 : _b.gameId, req.body.authenticatedUserId, req.body.coordinates);
-            // TODO: why?
-            // @ts-ignore
             if (!ActionResult_1.ActionResult.isSuccess(makeMoveResult)) {
                 res.status(400);
                 res.json(makeMoveResult.info);
@@ -155,8 +155,7 @@ class GameController {
         });
     }
     setHeaders(req, res, next) {
-        // TODO: research on privacy
-        res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
+        res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || 'same-origin');
         res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         res.setHeader('Content-Type', 'application/json');
         next();

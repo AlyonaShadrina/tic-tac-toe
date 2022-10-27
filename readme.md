@@ -23,7 +23,6 @@ In your browser go to http://localhost:8080.
 10. The first move belongs to player in browser #1
 
 ## TODO
-- add dto to controller
 - try nest.js
 - add service that could play as computer
 - add swagger

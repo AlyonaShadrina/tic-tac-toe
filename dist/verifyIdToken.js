@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verify = void 0;
 const google_auth_library_1 = require("google-auth-library");
-// TODO: test with incorrect client id
 const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const client = new google_auth_library_1.OAuth2Client(clientId);
 function verify(token) {

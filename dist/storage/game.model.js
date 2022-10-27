@@ -9,12 +9,6 @@ const gameSchema = new mongoose_1.Schema({
     },
     players: {
         type: [{
-                // TODO: in a perfect wat, this should be a fore
-                // _userId: { 
-                //   type: Schema.Types.ObjectId,
-                //   ref: 'User',
-                //   required: true,
-                // },
                 userId: {
                     type: String,
                     required: true,

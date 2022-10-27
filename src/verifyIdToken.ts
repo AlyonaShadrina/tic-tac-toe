@@ -1,6 +1,5 @@
-import {OAuth2Client} from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 
-// TODO: test with incorrect client id
 const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
 
 const client = new OAuth2Client(clientId);

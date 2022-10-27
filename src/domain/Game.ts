@@ -13,16 +13,7 @@ export type TMakeMoveUpdates = {
   currentPlayerMoveIndex: number,
 };
 
-// TODO: is it really needed?
-interface IGame {
-  status: TGameStatus;
-  players: IPlayer[];
-  currentPlayerMoveIndex: number;
-  field: IField;
-  makeMove(coordinates: TCoordinates, symbol: TFieldSymbol): IActionResult<TMakeMoveUpdates | Record<string, unknown> | null>;
-}
-
-export class Game implements IGame {
+export class Game {
   constructor(
     public status: TGameStatus,
     public players: IPlayer[],
@@ -53,7 +44,7 @@ export class Game implements IGame {
     return new ActionResultSuccess('Game started', null);
   }
 
-  makeMove(coordinates: TCoordinates, symbol: TFieldSymbol) {  
+  makeMove(coordinates: TCoordinates, symbol: TFieldSymbol): ReturnType<IField['setCellContent']> | IActionResult<null | TMakeMoveUpdates> {  
     if (this.status !== 'in_progress') {
       return new ActionResultError('Game not in progress', null);
     }

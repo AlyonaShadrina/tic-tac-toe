@@ -1,5 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { body, checkSchema, validationResult } from 'express-validator';
+import helmet from 'helmet';
 import { Server } from 'socket.io';
 import { ActionResult } from '../domain/ActionResult';
 import { TCoordinates, TFieldSymbol } from "../domain/types";
@@ -15,6 +16,7 @@ export class GameController {
     private readonly _io: Server,
   ) {
     this._app.use(express.json());
+    this._app.use(helmet())
     this._app.use(this.setHeaders);
     this._app.use(this.authenticate);
     
@@ -88,8 +90,6 @@ export class GameController {
       this.validateRequest,
       async (req: Request, res: Response) => {
         const makeMoveResult = await this.makeMove(req.params?.gameId, req.body.authenticatedUserId, req.body.coordinates);
-        // TODO: why?
-        // @ts-ignore
         if (!ActionResult.isSuccess(makeMoveResult)) {
           res.status(400);
           res.json(makeMoveResult.info);
@@ -146,8 +146,7 @@ export class GameController {
     }
   }
   private setHeaders(req: Request, res: Response, next: NextFunction) {
-    // TODO: research on privacy
-    res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || '');
+    res.setHeader('Access-Control-Allow-Origin', process.env.HEADER_CORS_ALLOWED || 'same-origin');
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader('Content-Type', 'application/json');
     next();

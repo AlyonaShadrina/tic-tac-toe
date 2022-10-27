@@ -19,7 +19,6 @@ class GameRepository {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const result = yield this._gameModel.findOne({ _id: new mongodb_1.ObjectId(gameId) });
-                // TODO: .toObject() or .lean()?
                 return result ? result.toObject({ getters: true }) : result;
             }
             catch (e) {
@@ -38,7 +37,6 @@ class GameRepository {
     }
     addPlayer(gameId, player) {
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO: check what happens if fails
             yield this._gameModel.findOneAndUpdate({ _id: gameId }, { $push: { players: { userId: player.userId, symbol: player.symbol }
                 }
             });
@@ -52,7 +50,6 @@ class GameRepository {
     }
     startGame(gameId) {
         return __awaiter(this, void 0, void 0, function* () {
-            // TODO: check what happens if fails
             yield this._gameModel.findOneAndUpdate({ _id: gameId }, { status: 'in_progress' });
         });
     }

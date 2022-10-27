@@ -19,7 +19,6 @@ export class GameRepository implements IGameRepository {
   async find(gameId: TId): Promise<GameDBEntity | null> {
     try {
       const result = await this._gameModel.findOne({ _id: new ObjectId(gameId) });
-      // TODO: .toObject() or .lean()?
       return result ? result.toObject({ getters: true }) : result
     } catch (e) {
       return null;
@@ -38,7 +37,6 @@ export class GameRepository implements IGameRepository {
   }
 
   async addPlayer(gameId: TId, player: IPlayerDBEntity) {
-    // TODO: check what happens if fails
     await this._gameModel.findOneAndUpdate(
       { _id: gameId }, 
       { $push: 
@@ -55,7 +53,6 @@ export class GameRepository implements IGameRepository {
   }
   
   async startGame(gameId: TId) {
-    // TODO: check what happens if fails
     await this._gameModel.findOneAndUpdate(
       { _id: gameId }, 
       { status: 'in_progress' },

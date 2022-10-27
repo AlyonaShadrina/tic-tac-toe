@@ -76,7 +76,7 @@ class UI {
           Authorization: Cookies.get('goauth'),
         }
       });
-      if (result.ok) {
+      if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
       }

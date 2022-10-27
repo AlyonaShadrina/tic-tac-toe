@@ -36,12 +36,9 @@ export class GameService implements IGameService {
       return new ActionResultError('No game with provided id found', null);
     }
     const player = game.players.find(player => player.userId === userId) as IPlayerDBEntity;
-    // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
     const moveResult = domainGame.makeMove(coordinates, player?.symbol);
 
-    // TODO: why?
-    // @ts-ignore
     if (ActionResult.isSuccess(moveResult)) {
       await this._gameRepository.update(gameId, moveResult.info.data as TMakeMoveUpdates);
     }
@@ -57,7 +54,6 @@ export class GameService implements IGameService {
     if (game.players.find(player => player.userId === userId)) {
       return new ActionResultError('Player already registered in game', null)
     }
-    // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
     const addResult = domainGame.addPlayer({ symbol });
 
@@ -73,7 +69,6 @@ export class GameService implements IGameService {
     if (!game) {
       return new ActionResultError('No game with provided id found', null);
     }
-    // TODO: inject GameMapper? 
     const domainGame = GameMapper.mapToDomainGame(game);
     const startResult = domainGame.startGame();
 
