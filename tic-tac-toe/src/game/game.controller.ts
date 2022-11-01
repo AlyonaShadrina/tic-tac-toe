@@ -15,12 +15,16 @@ import { MakeMoveDto } from './dto/make-move.dto';
 import { ActionResult } from 'src/domain/ActionResult';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthInterceptor } from 'src/auth/auth.interceptor';
+import { GameGateway } from 'src/game/game.gateway';
 
 @Controller('api/games')
 @UseGuards(AuthGuard)
 export class GameController {
   // TODO: interface
-  constructor(private readonly _gameService: GameService) {}
+  constructor(
+    private readonly _gameService: GameService,
+    private readonly _gameGateway: GameGateway,
+  ) {}
 
   @Post()
   async create() {
@@ -50,8 +54,8 @@ export class GameController {
     if (!ActionResult.isSuccess(addPlayerResult)) {
       throw new BadRequestException(addPlayerResult.info);
     } else {
+      this._gameGateway.server.emit(`${id}_player`, addPlayerResult.info.data);
       return addPlayerResult.info.data;
-      // TODO: emit player data to others
     }
   }
 
@@ -61,6 +65,7 @@ export class GameController {
     if (!ActionResult.isSuccess(startGameResult)) {
       throw new NotFoundException(startGameResult.info);
     } else {
+      this._gameGateway.server.emit(`${id}_start`, startGameResult.info.data);
       return startGameResult.info.data;
     }
   }
@@ -77,8 +82,8 @@ export class GameController {
     if (!ActionResult.isSuccess(makeMoveResult)) {
       throw new BadRequestException(makeMoveResult.info);
     } else {
+      this._gameGateway.server.emit(`${id}_move`, makeMoveResult.info.data);
       return makeMoveResult.info.data;
-      // TODO: emit move data to others
     }
   }
 }
