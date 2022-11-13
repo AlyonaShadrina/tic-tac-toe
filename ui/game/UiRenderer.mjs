@@ -1,5 +1,5 @@
-import { parseJwt } from './auth.mjs';
-import Cookies from './js.cookie.min.mjs';
+import { parseJwt } from '../utils.mjs';
+import Cookies from '../js.cookie.min.mjs';
 
 // TODO: split to 2 different renderers: html and console
 class UiRenderer {

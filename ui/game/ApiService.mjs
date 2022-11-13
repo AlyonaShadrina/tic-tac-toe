@@ -1,4 +1,4 @@
-import Cookies from './js.cookie.min.mjs';
+import Cookies from '../js.cookie.min.mjs';
 
 class ApiService {
   constructor(baseUrl = '') {
