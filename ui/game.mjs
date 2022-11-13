@@ -1,8 +1,64 @@
 import Cookies from './js.cookie.min.mjs';
 import { parseJwt } from './auth.mjs';
 
+class ApiService {
+  constructor(baseUrl = '') {
+    this.baseUrl = baseUrl;
+  }
+  
+  async loadGame(gameId) {
+    return fetch(`${this.baseUrl}/api/games/${gameId}`, {
+      headers: {
+        Authorization: Cookies.get('goauth'),
+      }
+    });
+  }
+
+  async makeMove(gameId, coordinates) {
+    return fetch(`${this.baseUrl}/api/games/${gameId}/move`, {
+      method: 'POST',
+      body: JSON.stringify({ coordinates }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: Cookies.get('goauth'),
+      }
+    });
+  }
+
+  async addPlayer(gameId, symbol) {
+    return fetch(`${this.baseUrl}/api/games/${gameId}/players`, {
+      method: 'POST',
+      body: JSON.stringify({ symbol }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: Cookies.get('goauth'),
+      }
+    });
+  }
+
+  async startGame(gameId) {
+    return fetch(`${this.baseUrl}/api/games/${gameId}/start`, {
+      method: 'POST',
+      headers: {
+        Authorization: Cookies.get('goauth'),
+      }
+    });
+  }
+
+  async createGame() {
+    return fetch(`${this.baseUrl}/api/games`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: Cookies.get('goauth'),
+      }
+    });
+  }
+}
+
 class UI {
-  constructor() {
+  constructor(apiService) {
+    this._apiService = apiService;
     this.game = null;
     this.gameId = new URLSearchParams(window.location.search).get('game_id');
     if (this.gameId) {
@@ -16,11 +72,7 @@ class UI {
   async loadGame() {
     if (this.gameId) {
       try {
-        const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}`, {
-          headers: {
-            Authorization: Cookies.get('goauth'),
-          }
-        });
+        const result = await this._apiService.loadGame(this.gameId);
         if (result.ok) {
           this.game = await result.json();
         } else {
@@ -36,14 +88,7 @@ class UI {
 
   async makeMove(coordinates) {
     if (this.gameId) {
-      const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/move`, {
-        method: 'POST',
-        body: JSON.stringify({ coordinates }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: Cookies.get('goauth'),
-        }
-      });
+      const result = await await this._apiService.makeMove(this.gameId, coordinates);
       if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
@@ -53,14 +98,7 @@ class UI {
 
   async addPlayer(symbol) {
     if (this.gameId) {
-      const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/players`, {
-        method: 'POST',
-        body: JSON.stringify({ symbol }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: Cookies.get('goauth'),
-        }
-      });
+      const result = await this._apiService.addPlayer(this.gameId, symbol);
       if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
@@ -70,12 +108,7 @@ class UI {
 
   async startGame() {
     if (this.gameId) {
-      const result = await fetch(`http://127.0.0.1:3000/api/games/${this.gameId}/start`, {
-        method: 'POST',
-        headers: {
-          Authorization: Cookies.get('goauth'),
-        }
-      });
+      const result = await this._apiService.startGame(this.gameId);
       if (!result.ok) {
         const data = await result.json();
         this.printErrorMessage(data.message);
@@ -83,15 +116,8 @@ class UI {
     }
   }
 
-  async createGame(players) {
-    const result = await fetch(`http://127.0.0.1:3000/api/games`, {
-      method: 'POST',
-      body: JSON.stringify(players),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: Cookies.get('goauth'),
-      }
-    });
+  async createGame() {
+    const result = await this._apiService.createGame();
     if (result.ok) {
       this.gameId = (await result.json()).id;
       window.history.replaceState({}, "", decodeURIComponent(`${window.location.pathname}?game_id=${this.gameId}`));
@@ -267,6 +293,8 @@ class UI {
   }
 }
 
-export function renderGameUI(gameId) {
-  window.gameUI = new UI(gameId);
+export function renderGameUI() {
+  window.gameUI = new UI(
+    new ApiService('http://127.0.0.1:3000')
+  );
 }
